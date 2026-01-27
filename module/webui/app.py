@@ -1181,15 +1181,15 @@ class NKASGUI(Frame):
             put_html("""
             <div style="text-align:center">
                 <div style="display:inline-block; margin: 5px;">
-                    <img src="/static/assets/wechat.png" alt="WeChat" width="200"/><br/>
+                    <img src="/static/gui/donate/wechat.png" alt="WeChat" width="200"/><br/>
                     <small>WeChat Pay (微信)</small>
                 </div>
                 <div style="display:inline-block; margin: 5px;">
-                    <img src="/static/assets/alipay.png" alt="Alipay" width="200"/><br/>
+                    <img src="/static/gui/donate/alipay.png" alt="Alipay" width="200"/><br/>
                     <small>Alipay (支付宝)</small>
                 </div>
                 <div style="display:inline-block; margin: 5px;">
-                    <img src="/static/assets/alipayremit.png" alt="Alipay Remit" width="200"/><br/>
+                    <img src="/static/gui/donate/alipayremit.png" alt="Alipay Remit" width="200"/><br/>
                     <small>Alipay Remit (For international)</small>
                 </div>
             </div>
@@ -1212,6 +1212,20 @@ class NKASGUI(Frame):
     def run(self) -> None:
         # setup gui
         set_env(title="NKAS", output_animation=False)
+
+        icon_path = '/static/gui/icon/nkas.ico'
+        run_js(f"""
+            var links = document.querySelectorAll("link[rel~='icon']");
+            links.forEach(function(l) {{
+                l.parentNode.removeChild(l);
+            }});
+
+            var newLink = document.createElement('link');
+            newLink.rel = 'icon';
+            newLink.href = '{icon_path}';
+            document.getElementsByTagName('head')[0].appendChild(newLink);
+        """)
+
         add_css(filepath_css("nkas"))
         if self.is_mobile:
             add_css(filepath_css("nkas-mobile"))
@@ -1562,7 +1576,7 @@ def app():
     app = asgi_app(
         applications=[index, manage],
         # cdn=cdn,
-        static_dir='./doc',
+        static_dir='./assets',
         debug=True,
         on_startup=[
             startup,
