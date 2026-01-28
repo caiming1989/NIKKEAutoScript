@@ -127,14 +127,14 @@ Alas的所有开发者，到现在我还是觉得Alas的源码不明觉厉
 您的支持就是作者持续开发与维护项目的动力🚀  
 
 <p>
-  <img src="https://raw.githubusercontent.com/megumiss/NIKKEAutoScript/master/doc/assets/wechat.png" alt="WeChat Pay" width="200"/>
-  <img src="https://raw.githubusercontent.com/megumiss/NIKKEAutoScript/master/doc/assets/alipay.png" alt="Alipay" width="200"/>
+  <img src="https://raw.githubusercontent.com/megumiss/NIKKEAutoScript/master/assets/gui/donate/wechat.png" alt="WeChat Pay" width="200"/>
+  <img src="https://raw.githubusercontent.com/megumiss/NIKKEAutoScript/master/assets/gui/donate/alipay.png" alt="Alipay" width="200"/>
 </p>
 
 **For international supporters:**
 
 <p>
-  <img src="https://raw.githubusercontent.com/megumiss/NIKKEAutoScript/master/doc/assets/alipayremit.png" alt="Alipay Remit" width="200"/>
+  <img src="https://raw.githubusercontent.com/megumiss/NIKKEAutoScript/master/assets/gui/donate/alipayremit.png" alt="Alipay Remit" width="200"/>
 </p>
 
 Support: Hanpass PandaRemit WireBarley GmoneyTrans Debunk PayForex koala transfer Sendly GME
