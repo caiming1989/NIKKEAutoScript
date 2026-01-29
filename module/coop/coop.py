@@ -146,7 +146,7 @@ class Coop(UI):
                 logger.info('Find coop in breaking news')
                 continue
 
-            if self.appear(DAYBYDAY_CHECK, offset=10):
+            if self.appear(DAYBYDAY_CHECK, offset=10, static=False):
                 logger.info('Not find coop in breaking news')
                 raise CoopIsUnavailable
 
