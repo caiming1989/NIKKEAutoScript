@@ -191,7 +191,7 @@ class Coop(UI):
             # 协同开始
             if (
                 click_timer.reached()
-                and self.appear(COOP_ROLE_CHECK, offset=10)
+                and self.appear(COOP_ROLE_CHECK, offset=30)
                 and not self.appear(COOP_CANCEL, offset=10)
                 and self.appear_then_click(COOP_START, offset=10, interval=10, threshold=0.3)
             ):
