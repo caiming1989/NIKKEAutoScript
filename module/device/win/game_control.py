@@ -1,6 +1,6 @@
 import ctypes
 
-from module.exception import ScreenResolutionNotEnough
+from module.exception import RequestHumanTakeover, ScreenResolutionNotEnough
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
@@ -153,8 +153,13 @@ class WinClient:
         设置屏幕方向
         orientation: 0=横屏, 1=竖屏(90), 2=横屏翻转, 3=竖屏(270)
         """
-        device = win32api.EnumDisplayDevices(None, screen_n)
-        dm = win32api.EnumDisplaySettings(device.DeviceName, win32con.ENUM_CURRENT_SETTINGS)
+        try:
+            device = win32api.EnumDisplayDevices(None, screen_n)
+            dm = win32api.EnumDisplaySettings(device.DeviceName, win32con.ENUM_CURRENT_SETTINGS)
+        except Exception as e:
+            # 捕获异常
+            logger.error(f'Failed to get display settings, Please check screen settings. Error: {e}')
+            raise RequestHumanTakeover
 
         # 如果当前方向和目标方向不一样
         if dm.DisplayOrientation != orientation:
@@ -163,8 +168,11 @@ class WinClient:
                 dm.PelsWidth, dm.PelsHeight = dm.PelsHeight, dm.PelsWidth
 
             dm.DisplayOrientation = orientation
-            win32api.ChangeDisplaySettingsEx(device.DeviceName, dm)
-            logger.info(f'Setting screen orientation: {orientation}')
+            try:
+                win32api.ChangeDisplaySettingsEx(device.DeviceName, dm)
+                logger.info(f'Setting screen orientation: {orientation}')
+            except Exception as e:
+                logger.error(f'Failed to change screen orientation: {e}')
 
     @staticmethod
     def set_foreground_window_with_retry(hwnd):
