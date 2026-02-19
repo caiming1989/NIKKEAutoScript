@@ -380,8 +380,8 @@ class EventStory(EventBase):
                     break
         # 如果最后一关没有clear
         if (
-            not self.appear(self.STORY_STAGE_12(open_story), offset=30, threshold=0.9)
-            and not self.appear(self.STORY_STAGE_12(f'{open_story}_clear'), offset=30, threshold=0.9)
+            not self.appear(self.STORY_STAGE_12(open_story), offset=80, threshold=0.9)
+            and not self.appear(self.STORY_STAGE_12(f'{open_story}_clear'), offset=80, threshold=0.9)
             and has_pending_stage
         ):
             logger.info('Pending stage found, start pushing loop')
@@ -466,8 +466,8 @@ class EventStory(EventBase):
                     continue
 
                 # 关卡推完回到了关卡列表
-                if self.appear(self.STORY_STAGE_12(open_story), offset=30, threshold=0.9) and self.appear(
-                    self.STORY_STAGE_12(f'{open_story}_clear'), offset=30, threshold=0.9
+                if self.appear(self.STORY_STAGE_12(open_story), offset=80, threshold=0.9) and self.appear(
+                    self.STORY_STAGE_12(f'{open_story}_clear'), offset=80, threshold=0.9
                 ):
                     logger.warning('Story push done, stage 12 cleared')
                     # self.back_to_event()
@@ -477,8 +477,8 @@ class EventStory(EventBase):
 
     def find_and_sweep_stage(self, open_story):
         click_timer = Timer(0.3)
-        if self.appear(self.STORY_STAGE_11(open_story), offset=30, threshold=0.9) and self.appear(
-            self.STORY_STAGE_11(f'{open_story}_clear'), offset=30, threshold=0.9
+        if self.appear(self.STORY_STAGE_11(open_story), offset=80, threshold=0.9) and self.appear(
+            self.STORY_STAGE_11(f'{open_story}_clear'), offset=80, threshold=0.9
         ):
             max_clicks = 0
             while 1:
@@ -499,8 +499,8 @@ class EventStory(EventBase):
                 # 关卡检查
                 if (
                     click_timer.reached()
-                    and self.appear(self.STORY_STAGE_11(open_story), offset=30, threshold=0.9)
-                    and self.appear_then_click(self.STORY_STAGE_11(f'{open_story}_clear'), offset=30, threshold=0.9)
+                    and self.appear(self.STORY_STAGE_11(open_story), offset=80, threshold=0.9)
+                    and self.appear_then_click(self.STORY_STAGE_11(f'{open_story}_clear'), offset=80, threshold=0.9)
                 ):
                     self.device.sleep(0.5)
                     click_timer.reset()
