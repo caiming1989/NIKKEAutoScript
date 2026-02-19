@@ -375,7 +375,7 @@ class EventStory(EventBase):
         has_pending_stage = False
         if pending_buttons:
             for button in pending_buttons:
-                if self.appear_with_flip(button, offset=30, threshold=0.9, color_threshold=10, static=False):
+                if self.appear_with_flip(button, offset=30, threshold=0.9, color_threshold=20, static=False):
                     has_pending_stage = True
                     break
         # 如果最后一关没有clear
@@ -396,7 +396,7 @@ class EventStory(EventBase):
                         button,
                         offset=30,
                         threshold=0.9,
-                        color_threshold=10,
+                        color_threshold=20,
                         interval=1,
                         static=False,
                     ):
