@@ -189,13 +189,29 @@ class WinClient:
             logger.debug(f'Executing window action: {action} (hwnd: {hwnd_hex})')
             ctypes.windll.user32.ShowWindow(hwnd, state)
 
+        def bypass_foreground_lock():
+            """通过模拟按下并释放 Alt 键"""
+            VK_MENU = 0x12
+            KEYEVENTF_KEYUP = 0x0002
+            logger.debug("Simulating Alt key press.")
+            # 模拟按下 Alt
+            ctypes.windll.user32.keybd_event(VK_MENU, 0, 0, 0)
+            # 模拟释放 Alt
+            ctypes.windll.user32.keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0)
+
+        bypass_foreground_lock()
+        time.sleep(0.5)
         toggle_window_state(hwnd, minimize=False)
+
         if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
             logger.warning(
                 f'Initial attempt to set window {hwnd_hex} to foreground [FAILED]. Initiating minimize-restore retry strategy...'
             )
+            bypass_foreground_lock()
+            time.sleep(0.5)
             toggle_window_state(hwnd, minimize=True)
             toggle_window_state(hwnd, minimize=False)
+
             if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
                 # 获取 Windows 底层错误码
                 error_code = ctypes.GetLastError()
