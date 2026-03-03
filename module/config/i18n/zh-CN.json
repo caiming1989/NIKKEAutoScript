@@ -58,6 +58,10 @@
       "name": "PC客户端",
       "help": ""
     },
+    "Notify": {
+      "name": "通知任务",
+      "help": "当日任务完成时发送通知，只有当NKAS设置中开启 \"日常完成时发送通知\" 才有效"
+    },
     "Restart": {
       "name": "重启设置",
       "help": ""
@@ -625,7 +629,7 @@
     },
     "OnePushConfig": {
       "name": "推送设置",
-      "help": "使用 Onepush 推送一条错误信息。配置方法见文档：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+      "help": "使用 Onepush 推送一条错误信息。配置方法见文档：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D\n将配置中provider的值从gocqhttp改为onebot11即可支持onebot\n目前仅smtp和onebot11支持图片发送，例如异常截图、抽卡截图"
     }
   },
   "Daily": {

@@ -123,13 +123,14 @@ class NikkeAutoScript:
             logger.info('Game server may be under maintenance or network may be broken, check server status now')
             # self.device.app_stop()
             logger.critical('Game page unknown')
-            self.save_error_log()
+            image_path = self.save_error_log()
             if self.config.Notification_WhenDailyTaskCrashed:
                 handle_notify(
-                    self.config.Notification_OnePushConfig,
-                    title=f'NKAS <{self.config_name}> crashed',
-                    content=f'<{self.config_name}> GamePageUnknownError',
+                    config=self.config,
+                    title_key='crashed',
+                    content_key='GamePageUnknownError',
                     always=self.config.Notification_WinOnePush,
+                    image_path=image_path,
                 )
             self._post_action()
             exit(1)
@@ -138,9 +139,9 @@ class NikkeAutoScript:
             self.device.app_stop()
             if self.config.Notification_WhenDailyTaskCrashed:
                 handle_notify(
-                    self.config.Notification_OnePushConfig,
-                    title=f'NKAS <{self.config_name}> crashed',
-                    content=f'<{self.config_name}> GameServerUnderMaintenance',
+                    config=self.config,
+                    title_key='crashed',
+                    content_key='GameServerUnderMaintenance',
                     always=self.config.Notification_WinOnePush,
                 )
             self._post_action()
@@ -149,22 +150,23 @@ class NikkeAutoScript:
             logger.critical('Request human takeover')
             if self.config.Notification_WhenDailyTaskCrashed:
                 handle_notify(
-                    self.config.Notification_OnePushConfig,
-                    title=f'NKAS <{self.config_name}> crashed',
-                    content=f'<{self.config_name}> RequestHumanTakeover',
+                    config=self.config,
+                    title_key='crashed',
+                    content_key='RequestHumanTakeover',
                     always=self.config.Notification_WinOnePush,
                 )
             self._post_action()
             exit(1)
         except Exception as e:
             logger.exception(e)
-            self.save_error_log()
+            image_path = self.save_error_log()
             if self.config.Notification_WhenDailyTaskCrashed:
                 handle_notify(
-                    self.config.Notification_OnePushConfig,
-                    title=f'NKAS <{self.config_name}> crashed',
-                    content=f'<{self.config_name}> Exception occured',
+                    config=self.config,
+                    title_key='crashed',
+                    content_key='ExceptionOccurred',
                     always=self.config.Notification_WinOnePush,
+                    image_path=image_path,
                 )
             self._post_action()
             exit(1)
@@ -175,7 +177,6 @@ class NikkeAutoScript:
         """
         if 'device' not in self.__dict__ or self.config.Client_Platform != 'win':
             return
-
         # 还原屏幕方向
         if self.config.PCClient_ScreenRotate:
             self.device.screen_rotate(self.config.PCClient_ScreenNumber)
@@ -196,12 +197,15 @@ class NikkeAutoScript:
         folder = f'./log/error/{int(time.time() * 1000)}'
         logger.warning(f'Saving error: {folder}')
         os.mkdir(folder)
+        last_image_path = None
         for data in self.device.screenshot_deque:
             image_time = datetime.strftime(data['time'], '%Y-%m-%d_%H-%M-%S-%f')
             # 遮挡个人消息
             # image = handle_sensitive_image(data['image'])
             image = data['image']
-            save_image(image, f'{folder}/{image_time}.png')
+            filepath = f'{folder}/{image_time}.png'
+            save_image(image, filepath)
+            last_image_path = filepath
         with open(logger.log_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             start = 0
@@ -215,6 +219,7 @@ class NikkeAutoScript:
             lines = handle_sensitive_logs(lines)
         with open(f'{folder}/log.txt', 'w', encoding='utf-8') as f:
             f.writelines(lines)
+        return last_image_path
 
     def restart(self):
         from module.handler.login import LoginHandler
@@ -443,6 +448,11 @@ class NikkeAutoScript:
 
         SurfaceDaily(config=self.config, device=self.device).run()
 
+    def notify(self):
+        from module.notify.notify import Notify
+
+        Notify(config=self.config, device=self.device).run()
+
     def wait_until(self, future):
         """
         Wait until a specific time.
@@ -499,8 +509,8 @@ class NikkeAutoScript:
                         if self.config.Client_Platform == 'win':
                             self.device.app_stop('Launcher')
                     release_resources()
+                    self._post_action()
                     if self.config.Client_Platform == 'win':
-                        self._post_action()
                         del_cached_property(self, 'device')
                     # self.device.release_during_wait()
                     if not self.wait_until(task.next_run):
@@ -602,10 +612,11 @@ class NikkeAutoScript:
                 logger.critical('Request human takeover')
                 if self.config.Notification_WhenDailyTaskCrashed:
                     handle_notify(
-                        self.config.Notification_OnePushConfig,
-                        title=f'NKAS <{self.config_name}> crashed',
-                        content=f'<{self.config_name}> RequestHumanTakeover\nTask `{task}` failed 3 or more times.',
+                        config=self.config,
+                        title_key='crashed',
+                        content_key=['RequestHumanTakeover', 'TaskFailedThreeTimes'],
                         always=self.config.Notification_WinOnePush,
+                        task=task,
                     )
                 self._post_action()
                 exit(1)
