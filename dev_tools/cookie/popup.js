@@ -6,24 +6,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
     const logMsg = document.getElementById('logMsg');
-    const userInfoDiv = document.getElementById('userInfo'); // 新增：获取用户信息 DOM
+    const userInfoDiv = document.getElementById('userInfo');
 
     // --- 常量配置 ---
     const TARGET_DOMAIN = "https://www.blablalink.com";
     const DEFAULT_API_URL = "http://127.0.0.1:12271/api/nkas/config";
-
     const CONFIG_KEY = "BlaAuth.BlaAuth.Cookie";
 
-    const COOKIES_TO_FETCH = [
+    // 必填 Cookie：缺失会导致判定为未登录
+    const REQUIRED_COOKIES = [
         "game_openid",
         "game_channelid",
         "game_token",
         "game_gameid",
         "game_login_game",
         "game_adult_status",
-        "game_user_name",
         "game_uid",
         "OptanonConsent",
+    ];
+
+    // 选填 Cookie：缺失不影响判定，有的话一并收集
+    const OPTIONAL_COOKIES = [
+        "game_user_name"
     ];
 
     let isLoggedIn = false;
@@ -31,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. 初始化：读取保存的 API 地址和自动同步状态
     chrome.storage.local.get(['savedApiUrl', 'autoSyncEnabled'], (result) => {
         apiUrlInput.value = result.savedApiUrl || DEFAULT_API_URL;
-        autoSyncCb.checked = result.autoSyncEnabled || false; // 默认关闭
+        autoSyncCb.checked = result.autoSyncEnabled || false;
 
         // 读取配置完毕后，执行首次启动检查
         checkLoginStatus(true);
@@ -62,28 +66,55 @@ document.addEventListener('DOMContentLoaded', () => {
         logMsg.style.color = isError ? '#dc3545' : '#666';
     }
 
+    // 掩码脱敏辅助函数
+    function maskString(str, type) {
+        if (!str) return '';
+        const len = str.length;
+
+        if (type === 'uid') {
+            // UID脱敏：保留前2位和后2位
+            if (len <= 4) return str.charAt(0) + '***' + str.charAt(len - 1);
+            return str.substring(0, 2) + '****' + str.substring(len - 2);
+        } else {
+            // 任意字符形式的用户名脱敏
+            if (len <= 2) {
+                return str.charAt(0) + '*';
+            } else if (len <= 4) {
+                return str.charAt(0) + '***' + str.charAt(len - 1);
+            } else {
+                // 大于4个字符，保留前2后2
+                return str.substring(0, 2) + '***' + str.substring(len - 2);
+            }
+        }
+    }
+
     // --- 检查登录状态 ---
-    // 用来判断是否是插件刚打开时的检查
     async function checkLoginStatus(isStartup = false) {
         isLoggedIn = false;
         syncBtn.disabled = true;
-        userInfoDiv.style.display = 'none'; // 检查前隐藏用户名
+        userInfoDiv.style.display = 'none';
         updateStatusUI('checking', '正在检查登录状态...');
         showLog('');
 
         try {
             let missingCookies = [];
-            let userName = ''; // 新增：用于暂存用户名
+            let userName = '';
+            let userId = '';
 
-            for (const name of COOKIES_TO_FETCH) {
-                const cookie = await chrome.cookies.get({
-                    url: TARGET_DOMAIN,
-                    name: name
-                });
+            // 1. 检查必填项并提取 UID
+            for (const name of REQUIRED_COOKIES) {
+                const cookie = await chrome.cookies.get({ url: TARGET_DOMAIN, name: name });
                 if (!cookie || !cookie.value) {
                     missingCookies.push(name);
-                } else if (name === 'game_user_name') {
-                    // 新增：提取用户名。由于中文可能被 URL 编码，这里使用 decodeURIComponent 解码
+                } else if (name === 'game_uid') {
+                    userId = cookie.value;
+                }
+            }
+
+            // 2. 尝试获取选填项 (用户名)
+            for (const name of OPTIONAL_COOKIES) {
+                const cookie = await chrome.cookies.get({ url: TARGET_DOMAIN, name: name });
+                if (cookie && cookie.value && name === 'game_user_name') {
                     userName = decodeURIComponent(cookie.value);
                 }
             }
@@ -93,20 +124,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateStatusUI('success', '已登录');
                 syncBtn.disabled = false;
 
-                // 新增：显示用户名
+                // 判断展示逻辑并脱敏
+                let displayAccount = '未知用户';
                 if (userName) {
-                    userInfoDiv.textContent = `当前登录账户：${userName}`;
-                    userInfoDiv.style.display = 'block';
+                    displayAccount = maskString(userName, 'name');
+                } else if (userId) {
+                    displayAccount = `UID:${maskString(userId, 'uid')}`;
                 }
 
-                // 如果是启动时，且勾选了自动同步，则直接发起同步
+                userInfoDiv.textContent = `当前登录账户：${displayAccount}`;
+                userInfoDiv.style.display = 'block';
+
                 if (isStartup && autoSyncCb.checked) {
                     syncCookies();
                 }
 
             } else {
                 updateStatusUI('error', '未登录或已失效');
-                showLog(`缺失 Cookie: ${missingCookies.join(', ')}`, true);
+                showLog(`缺失核心 Cookie: ${missingCookies.join(', ')}`, true);
             }
         } catch (error) {
             updateStatusUI('error', '检查异常');
@@ -133,9 +168,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             let cookiePairs = [];
-            for (const name of COOKIES_TO_FETCH) {
+            const ALL_COOKIES = [...REQUIRED_COOKIES, ...OPTIONAL_COOKIES];
+
+            for (const name of ALL_COOKIES) {
                 const c = await chrome.cookies.get({ url: TARGET_DOMAIN, name: name });
-                if (c) cookiePairs.push(`${c.name}=${c.value}`);
+                if (c && c.value) {
+                    cookiePairs.push(`${c.name}=${c.value}`);
+                }
             }
 
             const cookieString = cookiePairs.join('; ');
