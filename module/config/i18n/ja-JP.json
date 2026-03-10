@@ -460,7 +460,12 @@
       "help": "",
       "stay_there": "その場に留まる",
       "goto_main": "メインインターフェースに移動",
-      "close_game": "ゲームを閉じる"
+      "close_game": "ゲームを閉じる",
+      "run_script": "スクリプトを実行"
+    },
+    "ScriptPath": {
+      "name": "スクリプトパス",
+      "help": "スクリプトファイルの相対パス。Windowsは .bat / .ps1 / .exe、Linuxは .sh をサポートしています。相対パスはスクリプトのルートディレクトリを基準とします。プリセットスクリプトは scripts\\windows に配置されています。例えば、実行完了後に画面をロックしたい場合は、次のように入力します： scripts\\windows\\lock.bat"
     }
   },
   "Reward": {

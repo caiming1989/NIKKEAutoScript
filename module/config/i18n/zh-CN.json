@@ -460,7 +460,12 @@
       "help": "",
       "stay_there": "停在原处",
       "goto_main": "前往主界面",
-      "close_game": "关闭游戏"
+      "close_game": "关闭游戏",
+      "run_script": "运行脚本"
+    },
+    "ScriptPath": {
+      "name": "脚本路径",
+      "help": "脚本文件相对路径。Windows 支持 .bat/.ps1/.exe；Linux 支持 .sh，相对路径以脚本根目录为基准。预置脚本位于 `scripts\\windows`。\n例如如果需要执行完成后锁屏则可填写：scripts\\windows\\lock.bat。"
     }
   },
   "Reward": {

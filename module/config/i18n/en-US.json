@@ -460,7 +460,12 @@
       "help": "",
       "stay_there": "Stay in place",
       "goto_main": "Go to main screen",
-      "close_game": "Close game"
+      "close_game": "Close game",
+      "run_script": "Run script"
+    },
+    "ScriptPath": {
+      "name": "Script Path",
+      "help": "Relative path of the script file. Windows supports .bat/.ps1/.exe; Linux supports .sh. Relative paths are based on the script's root directory. Preset scripts are located in scripts\\windows.For example, if you want to lock the screen after execution, you can enter: scripts\\windows\\lock.bat."
     }
   },
   "Reward": {
