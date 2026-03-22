@@ -357,6 +357,9 @@ SurfaceDaily:
   Heal:
     value: true
     display: disabled
+SoloRaid:
+  Challenge:
+    value: false
 Account:
   Account:
     value: ''
