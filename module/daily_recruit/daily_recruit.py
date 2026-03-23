@@ -64,6 +64,25 @@ class DailyRecruit(UI):
             recruit_type_key=type,
         )
 
+    def get_notify_image_path(self, image, saved_path, recruit_type):
+        """
+        Fallback image path for notification:
+        - use saved_path when screenshot path is configured
+        - otherwise save to a temp path for notify only
+        """
+        if saved_path:
+            return saved_path
+
+        temp_dir = os.path.join('./tmp', self.config.config_name, 'notify')
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f'recruit_notify_{recruit_type}.png')
+
+        from module.base.utils import save_image
+
+        save_image(image, temp_path)
+        logger.info(f'Recruit screenshot path is empty, use temporary notify image: {temp_path}')
+        return temp_path
+
     def event_free_recruit(self, skip_first_screenshot=True):
         logger.hr('Event free recruit', 2)
         confirm_timer = Timer(5, count=3).start()
@@ -125,7 +144,8 @@ class DailyRecruit(UI):
                         logger.info(f'Save recruit image to: {saved_path}')
                     # 推送通知
                     if self.config.DailyRecruit_SSRNotifyPush:
-                        self.notify_push('EventFree', image=saved_path)
+                        notify_image = self.get_notify_image_path(self.device.image, saved_path, 'EventFree')
+                        self.notify_push('EventFree', image=notify_image)
 
                 while 1:
                     self.device.screenshot()
@@ -212,7 +232,8 @@ class DailyRecruit(UI):
                         logger.info(f'Save recruit image to: {saved_path}')
                     # 推送通知
                     if self.config.DailyRecruit_SSRNotifyPush:
-                        self.notify_push('150Gem', image=saved_path)
+                        notify_image = self.get_notify_image_path(self.device.image, saved_path, '150Gem')
+                        self.notify_push('150Gem', image=notify_image)
 
                 while 1:
                     self.device.screenshot()
@@ -290,7 +311,8 @@ class DailyRecruit(UI):
                         logger.info(f'Save recruit image to: {saved_path}')
                     # 推送通知
                     if self.config.DailyRecruit_SSRNotifyPush:
-                        self.notify_push('SocialPoint', image=saved_path)
+                        notify_image = self.get_notify_image_path(self.device.image, saved_path, 'SocialPoint')
+                        self.notify_push('SocialPoint', image=notify_image)
 
                 while 1:
                     self.device.screenshot()
