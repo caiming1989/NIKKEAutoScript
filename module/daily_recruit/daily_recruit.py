@@ -95,12 +95,12 @@ class DailyRecruit(UI):
                 self.device.screenshot()
 
             # 跳到普通招募页面时结束抽卡
-            if self.appear(ORDINARY_RECRUIT_CHECK, offset=(5, 5), interval=1, static=False):
+            if self.appear(ORDINARY_RECRUIT_CHECK, offset=(5, 5), threshold=0.85, static=False):
                 logger.info('Event free recruit has done')
                 raise EndEventFree
 
             # 免费抽卡
-            if not self.appear(FREE_RECRUIT_CHECK, offset=(5, 5), interval=1, static=False):
+            if not self.appear(FREE_RECRUIT_CHECK, offset=(5, 5), static=False):
                 # 向右点击
                 logger.info('Click %s @ %s' % (point2str(690, 670), 'TO_RIGHT_RECRUIT'))
                 self.device.click_minitouch(690, 670)
@@ -121,7 +121,7 @@ class DailyRecruit(UI):
             if (
                 not recruit_end
                 and click_timer.reached()
-                and self.appear(FREE_RECRUIT_CHECK, offset=(10, 10), interval=1, static=False)
+                and self.appear(FREE_RECRUIT_CHECK, offset=(10, 10), static=False)
             ):
                 logger.info('Click %s @ %s' % (point2str(130, 1050), 'FREE_RECRUIT'))
                 self.device.click_minitouch(130, 1050)
@@ -180,7 +180,7 @@ class DailyRecruit(UI):
                 self.device.screenshot()
 
             # 普通招募页面，没有次数结束抽卡
-            if self.appear(ORDINARY_RECRUIT_CHECK, offset=(30, 10)):
+            if self.appear(ORDINARY_RECRUIT_CHECK, offset=(30, 10), threshold=0.85):
                 if self.appear(ORDINARY_RECRUIT_ONCE_DONE, offset=(30, 30)):
                     logger.info('Ordinary 150gems recruit has done')
                     raise NotEnoughOrdinaryTimes
@@ -188,7 +188,7 @@ class DailyRecruit(UI):
                     break
 
             # 抽卡
-            if not self.appear(ORDINARY_RECRUIT_CHECK, offset=(30, 10)):
+            if not self.appear(ORDINARY_RECRUIT_CHECK, offset=(30, 10), threshold=0.85):
                 # 向右点击
                 logger.info('Click %s @ %s' % (point2str(690, 670), 'TO_RIGHT_RECRUIT'))
                 self.device.click_minitouch(690, 670)
@@ -264,7 +264,7 @@ class DailyRecruit(UI):
                 self.device.screenshot()
 
             # 友情点抽卡
-            if not self.appear(SOCIAL_RECRUIT_CHECK, offset=(5, 5), interval=1, static=False):
+            if not self.appear(SOCIAL_RECRUIT_CHECK, offset=(5, 5), static=False):
                 # 向左点击
                 logger.info('Click %s @ %s' % (point2str(30, 670), 'TO_LEFT_RECRUIT'))
                 self.device.click_minitouch(30, 670)
