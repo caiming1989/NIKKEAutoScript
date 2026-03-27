@@ -1496,6 +1496,8 @@ def debug():
 def startup():
     State.init()
     lang.reload()
+    from module.warehouse_stats.data import init_warehouse_stats_files
+    init_warehouse_stats_files()
     updater.event = State.manager.Event()
     if updater.delay > 0:
         task_handler.add(updater.check_update, updater.delay)
