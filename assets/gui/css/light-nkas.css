@@ -178,6 +178,12 @@ pre.rich-traceback-code {
     --interception-chart-chip-bg: rgba(78, 76, 151, 0.14);
     --interception-chart-chip-border: rgba(78, 76, 151, 0.28);
     --interception-chart-chip-text: #2e2f5f;
+    --interception-summary-chip-bg: rgba(58, 159, 241, 0.14);
+    --interception-summary-chip-border: rgba(58, 159, 241, 0.3);
+    --interception-summary-chip-text: #124771;
+    --interception-summary-time-bg: rgba(58, 159, 241, 0.1);
+    --interception-summary-time-border: rgba(58, 159, 241, 0.22);
+    --interception-summary-time-text: #3c566f;
     --interception-tone-daily-line: #3a9ff1;
     --interception-tone-daily-fill: rgba(58, 159, 241, 0.14);
     --interception-tone-daily-chip-bg: rgba(58, 159, 241, 0.14);

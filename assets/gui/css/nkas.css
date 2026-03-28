@@ -489,6 +489,36 @@ pre.rich-traceback-code {
     overflow-wrap: break-word;
 }
 
+.interception-group-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.interception-group-summary {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.interception-group-summary-main,
+.interception-group-summary-time {
+    font-size: 0.75rem;
+    color: var(--interception-summary-chip-text, var(--interception-chart-chip-text, #2e2f5f));
+    background: var(--interception-summary-chip-bg, rgba(58, 159, 241, 0.14));
+    border: 1px solid var(--interception-summary-chip-border, rgba(58, 159, 241, 0.3));
+    border-radius: 999px;
+    padding: 0.12rem 0.5rem;
+    line-height: 1.35;
+}
+
+.interception-group-summary-time {
+    white-space: nowrap;
+}
+
 .warehouse-group {
     margin: 0.75rem 0 1rem;
     border: 1px solid var(--warehouse-group-border, #dfe5ec);
@@ -800,6 +830,21 @@ pre.rich-traceback-code {
 }
 
 @media (max-width: 900px) {
+    .interception-group-title-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.18rem;
+    }
+
+    .interception-group-summary {
+        margin-left: 0;
+    }
+
+    .interception-group-summary-main,
+    .interception-group-summary-time {
+        font-size: 0.72rem;
+    }
+
     .interception-chart-head {
         align-items: flex-start;
         flex-direction: column;

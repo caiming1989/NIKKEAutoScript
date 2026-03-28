@@ -1355,7 +1355,8 @@
       "InterceptionChartSum": "合計",
       "InterceptionChartMax": "最大",
       "InterceptionChartAvg": "平均",
-      "InterceptionStoneUnit": "石"
+      "InterceptionStoneUnit": "石",
+      "InterceptionOwnedTotal": "石総数"
     }
   }
 }

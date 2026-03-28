@@ -1355,7 +1355,8 @@
       "InterceptionChartSum": "SUM",
       "InterceptionChartMax": "MAX",
       "InterceptionChartAvg": "AVG",
-      "InterceptionStoneUnit": "stones"
+      "InterceptionStoneUnit": "stones",
+      "InterceptionOwnedTotal": "Stones Total"
     }
   }
 }

@@ -163,6 +163,12 @@ pre.rich-traceback-code {
     --interception-chart-chip-bg: rgba(102, 184, 234, 0.2);
     --interception-chart-chip-border: rgba(102, 184, 234, 0.45);
     --interception-chart-chip-text: #d9f3ff;
+    --interception-summary-chip-bg: rgba(99, 194, 255, 0.2);
+    --interception-summary-chip-border: rgba(99, 194, 255, 0.44);
+    --interception-summary-chip-text: #e4f6ff;
+    --interception-summary-time-bg: rgba(99, 194, 255, 0.12);
+    --interception-summary-time-border: rgba(99, 194, 255, 0.28);
+    --interception-summary-time-text: #b7d8ec;
     --interception-tone-daily-line: #63c2ff;
     --interception-tone-daily-fill: rgba(99, 194, 255, 0.15);
     --interception-tone-daily-chip-bg: rgba(99, 194, 255, 0.2);

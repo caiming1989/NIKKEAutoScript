@@ -743,6 +743,11 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
         build_weekly_series,
         load_interception_stone_rows,
     )
+    from module.warehouse_stats.data import (
+        DEFAULT_CSV_PATH,
+        load_latest_counts,
+        resolve_csv_path,
+    )
 
     name: str = kwargs["name"]
 
@@ -754,8 +759,15 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
         keys=["InterceptionTaskStats", "InterceptionDropStats", "CsvPath"],
         default=DEFAULT_STONE_CSV_PATH,
     )
+    items_csv_path = deep_get(
+        config,
+        keys=["WarehouseStats", "WarehouseStats", "CsvPath"],
+        default=DEFAULT_CSV_PATH,
+    )
+    items_csv_path = resolve_csv_path(items_csv_path, config_name=nkasgui.nkas_name)
 
     rows = load_interception_stone_rows(csv_path, config_name=nkasgui.nkas_name)
+    item_counts = load_latest_counts(items_csv_path)
     outputs: List[Output] = []
     unit_text = t("Gui.Text.InterceptionStoneUnit")
     no_data_text = t("Gui.Text.InterceptionNoData")
@@ -765,10 +777,92 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
     sum_text = t("Gui.Text.InterceptionChartSum")
     max_text = t("Gui.Text.InterceptionChartMax")
     avg_text = t("Gui.Text.InterceptionChartAvg")
+    owned_total_label = t("Gui.Text.InterceptionOwnedTotal")
+
+    owned_row = item_counts.get('custom_module', {})
+    owned_count = _format_display_count(owned_row.get('count', ''))
+    owned_timestamp = str(owned_row.get('timestamp', '')).strip() or '-'
+    scope_name = f"arg_container-interception-chart-{name}"
+    run_js(
+        """
+(() => {
+    const scopeName = scope_name;
+    const label = owned_total_label;
+    const countText = owned_count;
+    const timestampText = owned_timestamp;
+
+    const applyHeaderSummary = (attempt) => {
+        const scope = document.getElementById(`pywebio-scope-${scopeName}`);
+        if (!scope) {
+            if (attempt < 30) {
+                setTimeout(() => applyHeaderSummary(attempt + 1), 50);
+            }
+            return;
+        }
+
+        const group = scope.closest('[id^="pywebio-scope-group_"]');
+        if (!group) {
+            if (attempt < 30) {
+                setTimeout(() => applyHeaderSummary(attempt + 1), 50);
+            }
+            return;
+        }
+
+        const groupLines = group.querySelectorAll(':scope > p');
+        const anchorNode = groupLines.length > 1 ? groupLines[1] : groupLines[0];
+        if (!anchorNode) {
+            if (attempt < 30) {
+                setTimeout(() => applyHeaderSummary(attempt + 1), 50);
+            }
+            return;
+        }
+
+        anchorNode.classList.add('interception-group-title-row');
+
+        group.querySelectorAll('.interception-group-summary').forEach((node) => {
+            if (node.parentElement !== anchorNode) {
+                node.remove();
+            }
+        });
+
+        let summary = anchorNode.querySelector('.interception-group-summary');
+        if (!summary) {
+            summary = document.createElement('span');
+            summary.className = 'interception-group-summary';
+
+            const main = document.createElement('span');
+            main.className = 'interception-group-summary-main';
+            summary.appendChild(main);
+
+            const time = document.createElement('span');
+            time.className = 'interception-group-summary-time';
+            summary.appendChild(time);
+
+            anchorNode.appendChild(summary);
+        }
+
+        const mainNode = summary.querySelector('.interception-group-summary-main');
+        const timeNode = summary.querySelector('.interception-group-summary-time');
+        if (mainNode) {
+            mainNode.textContent = `${label}: ${countText}`;
+        }
+        if (timeNode) {
+            timeNode.textContent = `更新时间: ${timestampText}`;
+        }
+    };
+
+    applyHeaderSummary(0);
+})();
+        """,
+        scope_name=scope_name,
+        owned_total_label=owned_total_label,
+        owned_count=str(owned_count),
+        owned_timestamp=owned_timestamp,
+    )
 
     if not rows:
         outputs.append(put_text(no_data_text))
-        scope = put_scope(f"arg_container-interception-chart-{name}", outputs)
+        scope = put_scope(scope_name, outputs)
         scope.style("display: grid; grid-template-columns: 1fr; gap: 0.75rem;")
         return scope
 
@@ -811,7 +905,7 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
         + '</div>'
     )
     outputs.append(put_html(chart_html))
-    scope = put_scope(f"arg_container-interception-chart-{name}", outputs)
+    scope = put_scope(scope_name, outputs)
     scope.style("display: grid; grid-template-columns: 1fr; gap: 0.75rem;")
     return scope
 
