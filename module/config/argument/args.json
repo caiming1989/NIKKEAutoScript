@@ -2684,6 +2684,11 @@
       }
     },
     "InterceptionTaskCharts": {
+      "ImportHistory": {
+        "type": "interception_stone_import",
+        "value": {},
+        "display": "readonly"
+      },
       "Charts": {
         "type": "interception_stone_charts",
         "value": {},

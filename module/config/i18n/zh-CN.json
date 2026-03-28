@@ -1192,6 +1192,10 @@
       "name": "异常拦截石头统计",
       "help": "以每日、每周、每月三个折线图展示异常拦截掉落石头数量"
     },
+    "ImportHistory": {
+      "name": "历史截图导入",
+      "help": "从历史异常拦截掉落截图中识别石头数量并导入统计CSV"
+    },
     "Charts": {
       "name": "折线图",
       "help": ""
@@ -1356,7 +1360,16 @@
       "InterceptionChartMax": "最大",
       "InterceptionChartAvg": "平均",
       "InterceptionStoneUnit": "石头",
-      "InterceptionOwnedTotal": "石头总数"
+      "InterceptionOwnedTotal": "石头总数",
+      "InterceptionImportButton": "导入历史截图",
+      "InterceptionImportDialogTitle": "导入异常拦截历史截图",
+      "InterceptionImportPathLabel": "截图路径",
+      "InterceptionImportPathPlaceholder": "默认读取异常拦截截图路径，可手动修改",
+      "InterceptionImportDefaultPath": "默认路径",
+      "InterceptionImportPathEmpty": "未设置",
+      "InterceptionImportDone": "历史截图导入完成：新增 {imported}，跳过 {skipped}，失败 {failed}",
+      "InterceptionImportFailed": "导入失败，请检查路径和截图内容",
+      "InterceptionImportLoading": "正在导入历史截图，请稍候..."
     }
   }
 }

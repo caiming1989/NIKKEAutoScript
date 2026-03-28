@@ -1,14 +1,19 @@
 import os
-from datetime import datetime
+import re
+from datetime import date, datetime, timedelta
 from functools import cached_property
 from typing import List, Optional, Tuple
 
 import numpy as np
 
 from module.base.timer import Timer
-from module.base.utils import point2str
+from module.base.utils import load_image, point2str
 from module.interception.assets import *
-from module.interception.data import append_interception_stone_record
+from module.interception.data import (
+    append_interception_stone_record,
+    load_interception_stone_rows,
+    resolve_stone_csv_path,
+)
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.simulation_room.assets import AUTO_BURST, AUTO_SHOOT, END_FIGHTING, PAUSE
@@ -456,3 +461,162 @@ class Interception(UI):
         except NoOpportunity:
             pass
         self.config.task_delay(server_update=True)
+
+
+def _normalize_import_path(path: str) -> str:
+    text = str(path or '').strip()
+    if not text:
+        return ''
+    return os.path.normcase(os.path.normpath(os.path.abspath(text)))
+
+
+def _iter_import_roots(base_path: str, config_name: str) -> List[str]:
+    roots: List[str] = []
+    normalized_base = _normalize_import_path(base_path)
+    if normalized_base and os.path.isdir(normalized_base):
+        roots.append(normalized_base)
+
+    if normalized_base and config_name:
+        child = _normalize_import_path(os.path.join(normalized_base, config_name))
+        if child and os.path.isdir(child) and child not in roots:
+            roots.append(child)
+    return roots
+
+
+def _parse_date_from_path(full_path: str, root_path: str) -> Optional[date]:
+    try:
+        rel_path = os.path.relpath(full_path, root_path)
+    except Exception:
+        rel_path = full_path
+
+    parts = [part for part in os.path.normpath(rel_path).split(os.sep) if part]
+    for part in parts:
+        try:
+            return datetime.strptime(part, '%Y-%m-%d').date()
+        except ValueError:
+            continue
+    return None
+
+
+def _collect_import_images(base_path: str, config_name: str) -> List[Tuple[date, int, float, str]]:
+    image_exts = {'.png', '.jpg', '.jpeg', '.bmp', '.webp'}
+    entries: List[Tuple[date, int, float, str]] = []
+    seen: set = set()
+
+    for root in _iter_import_roots(base_path, config_name):
+        for dirpath, _, filenames in os.walk(root):
+            for filename in filenames:
+                ext = os.path.splitext(filename)[1].lower()
+                if ext not in image_exts:
+                    continue
+                full_path = _normalize_import_path(os.path.join(dirpath, filename))
+                if not full_path or full_path in seen:
+                    continue
+                seen.add(full_path)
+
+                # 仅导入位于日期目录(YYYY-MM-DD)下的图片（允许日期目录下的子目录）
+                folder_date = _parse_date_from_path(full_path, root)
+                if folder_date is None:
+                    continue
+                mtime = os.path.getmtime(full_path)
+
+                index_match = re.search(r'(\d+)', os.path.splitext(filename)[0])
+                drop_index = int(index_match.group(1)) if index_match else 999999
+                entries.append((folder_date, drop_index, float(mtime), full_path))
+
+    entries.sort(key=lambda item: (item[0], item[1], item[2], item[3]))
+    return entries
+
+
+def import_interception_stone_records_from_screenshots(
+    import_path: str,
+    csv_path: str,
+    config_name: str,
+    boss: str = '',
+) -> dict:
+    path = str(import_path or '').strip()
+    if not path:
+        return {'ok': False, 'message': 'InterceptionStats: import path is empty.'}
+
+    roots = _iter_import_roots(path, config_name)
+    if not roots:
+        return {'ok': False, 'message': f'InterceptionStats: import path not found: {path}'}
+
+    entries = _collect_import_images(path, config_name)
+    if not entries:
+        return {'ok': False, 'message': f'InterceptionStats: no valid images in date folders (YYYY-MM-DD) under: {path}'}
+
+    helper = Interception.__new__(Interception)
+    import_template_threshold = 0.64
+    existing_rows = load_interception_stone_rows(csv_path, config_name=config_name)
+    existing_paths = set()
+    for row in existing_rows:
+        row_path = _normalize_import_path(row.get('screenshot_path', ''))
+        if not row_path:
+            continue
+        existing_paths.add(row_path)
+
+    day_counter = {}
+    imported = 0
+    skipped = 0
+    failed = 0
+
+    for folder_date, _, _, image_path in entries:
+        normalized_path = _normalize_import_path(image_path)
+        # 严格去重：同一路径出现过就跳过（无论历史识别值是否为 0）
+        if normalized_path in existing_paths:
+            skipped += 1
+            continue
+
+        try:
+            image = load_image(normalized_path)
+        except Exception:
+            image = None
+        if image is None:
+            failed += 1
+            logger.warning(f'InterceptionStats: failed to read image: {normalized_path}')
+            continue
+
+        try:
+            stone_count = Interception.recognize_drop_stone_count(helper, image)
+            if stone_count <= 0 and helper.STONE_TEMPLATE_THRESHOLD > import_template_threshold:
+                original_threshold = helper.STONE_TEMPLATE_THRESHOLD
+                helper.STONE_TEMPLATE_THRESHOLD = import_template_threshold
+                stone_count = Interception.recognize_drop_stone_count(helper, image)
+                helper.STONE_TEMPLATE_THRESHOLD = original_threshold
+        except Exception:
+            failed += 1
+            logger.exception(f'InterceptionStats: recognize failed for image: {normalized_path}')
+            continue
+
+        seq = day_counter.get(folder_date, 0) + 1
+        day_counter[folder_date] = seq
+        recorded_at = datetime.combine(folder_date, datetime.min.time()) + timedelta(seconds=seq)
+
+        ok = append_interception_stone_record(
+            csv_path=csv_path,
+            config_name=config_name,
+            boss=boss or '',
+            stone_count=stone_count,
+            screenshot_path=normalized_path,
+            recorded_at=recorded_at,
+        )
+        if ok:
+            imported += 1
+            existing_paths.add(normalized_path)
+        else:
+            failed += 1
+
+    resolved_csv = resolve_stone_csv_path(csv_path, config_name=config_name)
+    logger.info(
+        f'InterceptionStats: history import finished, imported={imported}, skipped={skipped}, '
+        f'failed={failed}, csv={resolved_csv}, source={path}'
+    )
+    return {
+        'ok': True,
+        'imported': imported,
+        'skipped': skipped,
+        'failed': failed,
+        'csv_path': resolved_csv,
+        'source_path': path,
+    }

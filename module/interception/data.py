@@ -65,12 +65,12 @@ def append_interception_stone_record(
         return False
 
     _ensure_parent_dir(csv_path)
-    file_exists = os.path.exists(csv_path)
+    file_has_content = os.path.exists(csv_path) and os.path.getsize(csv_path) > 0
     recorded_at = recorded_at or datetime.now().replace(microsecond=0)
 
     with open(csv_path, 'a', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
-        if not file_exists:
+        if not file_has_content:
             writer.writeheader()
         writer.writerow(
             {

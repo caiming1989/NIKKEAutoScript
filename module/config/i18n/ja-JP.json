@@ -1192,6 +1192,10 @@
       "name": "Interception Stone Charts",
       "help": "Daily, weekly, and monthly charts generated from interception drop records"
     },
+    "ImportHistory": {
+      "name": "履歴スクリーンショットのインポート",
+      "help": "過去の異常迎撃スクリーンショットから石ドロップ数を認識してCSVへ取り込みます"
+    },
     "Charts": {
       "name": "Charts",
       "help": ""
@@ -1356,7 +1360,16 @@
       "InterceptionChartMax": "最大",
       "InterceptionChartAvg": "平均",
       "InterceptionStoneUnit": "石",
-      "InterceptionOwnedTotal": "石総数"
+      "InterceptionOwnedTotal": "石総数",
+      "InterceptionImportButton": "履歴スクリーンショットをインポート",
+      "InterceptionImportDialogTitle": "異常迎撃履歴スクリーンショットのインポート",
+      "InterceptionImportPathLabel": "スクリーンショットパス",
+      "InterceptionImportPathPlaceholder": "異常迎撃の設定パスを既定値として使用（編集可）",
+      "InterceptionImportDefaultPath": "既定パス",
+      "InterceptionImportPathEmpty": "未設定",
+      "InterceptionImportDone": "インポート完了: 追加 {imported}、スキップ {skipped}、失敗 {failed}",
+      "InterceptionImportFailed": "インポート失敗。パスと画像を確認してください。",
+      "InterceptionImportLoading": "履歴スクリーンショットをインポート中です。しばらくお待ちください..."
     }
   }
 }

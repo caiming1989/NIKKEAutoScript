@@ -1192,6 +1192,10 @@
       "name": "Interception Stone Charts",
       "help": "Daily, weekly, and monthly charts generated from interception drop records"
     },
+    "ImportHistory": {
+      "name": "Import History Screenshots",
+      "help": "Recognize stone drops from historical interception screenshots and import into CSV"
+    },
     "Charts": {
       "name": "Charts",
       "help": ""
@@ -1356,7 +1360,16 @@
       "InterceptionChartMax": "MAX",
       "InterceptionChartAvg": "AVG",
       "InterceptionStoneUnit": "stones",
-      "InterceptionOwnedTotal": "Stones Total"
+      "InterceptionOwnedTotal": "Stones Total",
+      "InterceptionImportButton": "Import History Screenshots",
+      "InterceptionImportDialogTitle": "Import Interception History Screenshots",
+      "InterceptionImportPathLabel": "Screenshot Path",
+      "InterceptionImportPathPlaceholder": "Defaults to Interception screenshot path, editable",
+      "InterceptionImportDefaultPath": "Default Path",
+      "InterceptionImportPathEmpty": "Not set",
+      "InterceptionImportDone": "Import complete: added {imported}, skipped {skipped}, failed {failed}",
+      "InterceptionImportFailed": "Import failed. Please check path and screenshots.",
+      "InterceptionImportLoading": "Importing history screenshots, please wait..."
     }
   }
 }

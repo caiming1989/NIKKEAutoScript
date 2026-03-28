@@ -618,6 +618,115 @@ def put_arg_item_table(kwargs: T_Output_Kwargs) -> Output:
     return finalize(content)
 
 
+def put_arg_interception_stone_import(kwargs: T_Output_Kwargs) -> Output:
+    from pywebio.pin import pin
+
+    from module.config.deep import deep_get
+    from module.interception.data import DEFAULT_STONE_CSV_PATH
+    from module.interception.interception import import_interception_stone_records_from_screenshots
+
+    name: str = kwargs["name"]
+
+    def _read_context():
+        nkasgui = local.gui
+        config = nkasgui.nkas_config.read_file(nkasgui.nkas_name)
+        default_path = deep_get(
+            config,
+            keys=["Interception", "Interception", "DropScreenshotPath"],
+            default='',
+        )
+        csv_path = deep_get(
+            config,
+            keys=["InterceptionTaskStats", "InterceptionDropStats", "CsvPath"],
+            default=DEFAULT_STONE_CSV_PATH,
+        )
+        boss = deep_get(
+            config,
+            keys=["Interception", "Interception", "Boss"],
+            default='',
+        )
+        return nkasgui, str(default_path or ''), str(csv_path or ''), str(boss or '')
+
+    def _import_callback():
+        current_gui, current_default_path, current_csv_path, current_boss = _read_context()
+        path_pin_name = f"interception_import_path_{''.join(random.choice(string.ascii_letters) for _ in range(8))}"
+
+        def _submit_import():
+            import_path = str(pin[path_pin_name] or '').strip()
+            if not import_path:
+                toast(t("Gui.Text.InterceptionImportPathPlaceholder"), color='error')
+                return
+
+            close_popup()
+            popup(
+                t("Gui.Text.InterceptionImportLoading"),
+                [
+                    put_loading_text(
+                        t("Gui.Text.InterceptionImportLoading"),
+                        color='primary',
+                    ),
+                ],
+            )
+
+            result = {'ok': False}
+            try:
+                result = import_interception_stone_records_from_screenshots(
+                    import_path=import_path,
+                    csv_path=current_csv_path,
+                    config_name=current_gui.nkas_name,
+                    boss=current_boss,
+                )
+            finally:
+                close_popup()
+
+            if not result.get('ok'):
+                toast(str(result.get('message') or t("Gui.Text.InterceptionImportFailed")), color='error')
+                return
+
+            toast(
+                t(
+                    "Gui.Text.InterceptionImportDone",
+                    imported=int(result.get('imported', 0)),
+                    skipped=int(result.get('skipped', 0)),
+                    failed=int(result.get('failed', 0)),
+                ),
+                color='success',
+                duration=5,
+            )
+            current_gui.nkas_set_group('InterceptionTaskStats')
+
+        popup(
+            t("Gui.Text.InterceptionImportDialogTitle"),
+            [
+                put_input(
+                    label=t("Gui.Text.InterceptionImportPathLabel"),
+                    name=path_pin_name,
+                    value=current_default_path,
+                    placeholder=t("Gui.Text.InterceptionImportPathPlaceholder"),
+                ).style("--input--"),
+                put_row(
+                    [
+                        put_button(t("Gui.AppManage.Import"), onclick=_submit_import, color='primary'),
+                        put_button(t("Gui.AppManage.Back"), onclick=close_popup, color='danger'),
+                    ],
+                    size='auto auto 1fr',
+                ),
+            ],
+        )
+
+    return put_scope(
+        f"arg_container-input-{name}",
+        [
+            get_title_help(kwargs),
+            put_button(
+                label=t("Gui.Text.InterceptionImportButton"),
+                onclick=_import_callback,
+                color='primary',
+            ).style("--input--; display: block; width: max-content; margin-left: auto; margin-right: .2rem; white-space: nowrap; writing-mode: horizontal-tb;"),
+        ],
+    ).style("display: grid; width: 100%; gap: .14rem; margin-bottom: .22rem;")
+
+
 def _build_svg_line_chart(
     title: str,
     labels: List[str],
@@ -861,7 +970,7 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
     )
 
     if not rows:
-        outputs.append(put_text(no_data_text))
+        outputs.append(put_text(no_data_text).style("--arg-title--; margin: .1rem .25rem 0 !important;"))
         scope = put_scope(scope_name, outputs)
         scope.style("display: grid; grid-template-columns: 1fr; gap: 0.75rem;")
         return scope
@@ -921,6 +1030,7 @@ _widget_type_to_func: Dict[str, Callable] = {
     "state": put_arg_state,
     "stored": put_arg_stored,
     "item_table": put_arg_item_table,
+    "interception_stone_import": put_arg_interception_stone_import,
     "interception_stone_charts": put_arg_interception_stone_charts,
 }
 
