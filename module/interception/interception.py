@@ -470,17 +470,51 @@ def _normalize_import_path(path: str) -> str:
     return os.path.normcase(os.path.normpath(os.path.abspath(text)))
 
 
-def _iter_import_roots(base_path: str, config_name: str) -> List[str]:
-    roots: List[str] = []
-    normalized_base = _normalize_import_path(base_path)
-    if normalized_base and os.path.isdir(normalized_base):
-        roots.append(normalized_base)
+def _path_contains_folder(path: str, folder_name: str) -> bool:
+    target = os.path.normcase(str(folder_name or '').strip())
+    if not target:
+        return True
+    parts = [os.path.normcase(part) for part in os.path.normpath(path).split(os.sep) if part]
+    return target in parts
 
-    if normalized_base and config_name:
+
+def _is_date_folder_name(name: str) -> bool:
+    try:
+        datetime.strptime(str(name or '').strip(), '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
+
+
+def _has_direct_date_subfolder(path: str) -> bool:
+    try:
+        for entry in os.scandir(path):
+            if entry.is_dir() and _is_date_folder_name(entry.name):
+                return True
+    except Exception:
+        return False
+    return False
+
+
+def _iter_import_roots(base_path: str, config_name: str) -> List[str]:
+    normalized_base = _normalize_import_path(base_path)
+    if not normalized_base or not os.path.isdir(normalized_base):
+        return []
+
+    # 如果输入路径下一层就是日期目录(YYYY-MM-DD)，直接按该路径导入
+    if _has_direct_date_subfolder(normalized_base):
+        return [normalized_base]
+
+    if config_name and _path_contains_folder(normalized_base, config_name):
+        return [normalized_base]
+
+    if config_name:
         child = _normalize_import_path(os.path.join(normalized_base, config_name))
-        if child and os.path.isdir(child) and child not in roots:
-            roots.append(child)
-    return roots
+        if child and os.path.isdir(child):
+            return [child]
+        return []
+
+    return [normalized_base]
 
 
 def _parse_date_from_path(full_path: str, root_path: str) -> Optional[date]:
@@ -504,6 +538,7 @@ def _collect_import_images(base_path: str, config_name: str) -> List[Tuple[date,
     seen: set = set()
 
     for root in _iter_import_roots(base_path, config_name):
+        allow_without_config_folder = bool(config_name) and _has_direct_date_subfolder(root) and not _path_contains_folder(root, config_name)
         for dirpath, _, filenames in os.walk(root):
             for filename in filenames:
                 ext = os.path.splitext(filename)[1].lower()
@@ -511,6 +546,8 @@ def _collect_import_images(base_path: str, config_name: str) -> List[Tuple[date,
                     continue
                 full_path = _normalize_import_path(os.path.join(dirpath, filename))
                 if not full_path or full_path in seen:
+                    continue
+                if config_name and not allow_without_config_folder and not _path_contains_folder(full_path, config_name):
                     continue
                 seen.add(full_path)
 
@@ -540,7 +577,7 @@ def import_interception_stone_records_from_screenshots(
 
     roots = _iter_import_roots(path, config_name)
     if not roots:
-        return {'ok': False, 'message': f'InterceptionStats: import path not found: {path}'}
+        return {'ok': False, 'message': f'InterceptionStats: import path not found for config "{config_name}": {path}'}
 
     entries = _collect_import_images(path, config_name)
     if not entries:
