@@ -1157,6 +1157,7 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
     const scopeName = scope_name;
     const charts = chart_specs;
     const unitText = unit_text;
+    const isDark = is_dark;
 
     const pickEChartsModule = (mod) => {
         if (mod && typeof mod.init === 'function') {
@@ -1390,6 +1391,13 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
                         min: 0,
                         minInterval: 1,
                         splitNumber: 5,
+                        splitLine: {
+                            show: true,
+                            lineStyle: {
+                                color: isDark ? 'rgba(143, 151, 165, 0.14)' : 'rgba(0, 0, 0, 0.10)',
+                                width: 1,
+                            },
+                        },
                     },
                     series: [
                         {
@@ -1447,6 +1455,7 @@ def put_arg_interception_stone_charts(kwargs: T_Output_Kwargs) -> Output:
         scope_name=scope_name,
         chart_specs=chart_specs,
         unit_text=unit_text,
+        is_dark=(State.theme == 'dark'),
     )
     return scope
 
