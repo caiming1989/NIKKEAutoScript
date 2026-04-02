@@ -31,6 +31,10 @@ class ProductQueueIsEmpty(Exception):
     pass
 
 
+class ShiftyShopReplaced(Exception):
+    pass
+
+
 class Product:
     def __init__(self, name, count, button):
         self.name = name
@@ -56,6 +60,9 @@ class ShopBase(UI):
             # 检查是否已进入目标页面
             if self.appear(check, offset=(5, 5)) and confirm_timer.reached():
                 break
+            # 谢芙蒂占领
+            if self.appear(SHIFTY_SHOP_CHECK, offset=10) and confirm_timer.reached():
+                raise ShiftyShopReplaced
 
             # 点击进入商店按钮
             if click_timer.reached() and self.appear_then_click(button, offset=(5, 5), interval=5):
@@ -338,8 +345,11 @@ class Shop(ShopBase):
         self.ui_ensure(page_shop)
         if self.config.GeneralShop_enable:
             super().__setattr__('refreshed', False)
-            self.ensure_into_shop(GOTO_GENERAL_SHOP, GENERAL_SHOP_CHECK)
-            self.process_purchase(self.general_shop_priority, True, True)
+            try:
+                self.ensure_into_shop(GOTO_GENERAL_SHOP, GENERAL_SHOP_CHECK)
+                self.process_purchase(self.general_shop_priority, True, True)
+            except ShiftyShopReplaced:
+                logger.warning('General shop replaced by shifty shop')
         try:
             if self.config.ArenaShop_enable:
                 self.ensure_into_shop(GOTO_ARENA_SHOP, ARENA_SHOP_CHECK)
