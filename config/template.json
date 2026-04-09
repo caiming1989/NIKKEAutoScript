@@ -758,6 +758,7 @@
       "CsvPath": "./data/{config_name}/stones.csv"
     },
     "InterceptionTaskCharts": {
+      "ImportHistory": {},
       "Charts": {}
     },
     "Storage": {

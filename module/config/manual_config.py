@@ -96,6 +96,16 @@ class ManualConfig:
 
     EVENTS = [
         {
+            "event_id": "event_20260409",
+            "event_name": "Good World",
+            # 小型活动
+            "event_type": 2,
+            "mini_game": False,
+            "mini_game_play": True,
+            "story_part": "Story_1",  # Story_1, Story_2
+            "story_difficulty": "Normal"  # Normal, Hard
+        },
+        {
             "event_id": "event_20260319",
             "event_name": "2x2 Love",
             # 大型活动
