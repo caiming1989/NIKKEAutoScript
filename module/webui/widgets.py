@@ -433,6 +433,8 @@ def put_arg_textarea(kwargs: T_Output_Kwargs) -> Output:
         def _pick_file():
             from pywebio.pin import pin
             import os
+            import ctypes
+            from ctypes import wintypes
 
             def _normalize_windows_path(path: str) -> str:
                 raw = str(path or '').strip()
@@ -442,37 +444,127 @@ def put_arg_textarea(kwargs: T_Output_Kwargs) -> Output:
                 # Keep UI/config consistent on Windows.
                 return normalized.replace('/', '\\')
 
-            selected = ''
-            root = None
-            try:
-                import tkinter as tk
-                from tkinter import filedialog
+            def _dialog_options(ext: str):
+                suffix = str(ext or '').strip()
+                if suffix and not suffix.startswith('.'):
+                    suffix = f'.{suffix}'
+                if not suffix:
+                    suffix = '.exe'
+                pattern = f'*{suffix}'
+                if suffix.lower() == '.exe':
+                    label = 'Executable Files'
+                else:
+                    label = f'{suffix[1:].upper()} Files'
+                return label, pattern, suffix[1:]
 
-                root = tk.Tk()
-                root.withdraw()
-                try:
-                    root.attributes('-topmost', True)
-                    root.update()
-                except Exception:
-                    pass
+            def _pick_file_windows_native(title: str, ext: str) -> str:
+                if os.name != 'nt':
+                    return ''
 
-                selected = filedialog.askopenfilename(
-                    title=t("Gui.Text.ChooseFile"),
-                    filetypes=[
-                        ('Executable Files', '*.exe'),
-                        ('All Files', '*.*'),
-                    ],
+                class OPENFILENAMEW(ctypes.Structure):
+                    _fields_ = [
+                        ('lStructSize', wintypes.DWORD),
+                        ('hwndOwner', wintypes.HWND),
+                        ('hInstance', wintypes.HINSTANCE),
+                        ('lpstrFilter', wintypes.LPCWSTR),
+                        ('lpstrCustomFilter', wintypes.LPWSTR),
+                        ('nMaxCustFilter', wintypes.DWORD),
+                        ('nFilterIndex', wintypes.DWORD),
+                        ('lpstrFile', wintypes.LPWSTR),
+                        ('nMaxFile', wintypes.DWORD),
+                        ('lpstrFileTitle', wintypes.LPWSTR),
+                        ('nMaxFileTitle', wintypes.DWORD),
+                        ('lpstrInitialDir', wintypes.LPCWSTR),
+                        ('lpstrTitle', wintypes.LPCWSTR),
+                        ('Flags', wintypes.DWORD),
+                        ('nFileOffset', wintypes.WORD),
+                        ('nFileExtension', wintypes.WORD),
+                        ('lpstrDefExt', wintypes.LPCWSTR),
+                        ('lCustData', wintypes.LPARAM),
+                        ('lpfnHook', ctypes.c_void_p),
+                        ('lpTemplateName', wintypes.LPCWSTR),
+                        ('pvReserved', ctypes.c_void_p),
+                        ('dwReserved', wintypes.DWORD),
+                        ('FlagsEx', wintypes.DWORD),
+                    ]
+
+                label, pattern, def_ext = _dialog_options(ext)
+                # OPENFILENAME filter must be null-separated and double-null terminated.
+                lpstr_filter = f'{label} ({pattern})\0{pattern}\0All Files (*.*)\0*.*\0\0'
+                file_buffer = ctypes.create_unicode_buffer(32768)
+
+                ofn = OPENFILENAMEW()
+                ofn.lStructSize = ctypes.sizeof(OPENFILENAMEW)
+                ofn.lpstrFilter = lpstr_filter
+                ofn.lpstrFile = file_buffer
+                ofn.nMaxFile = len(file_buffer)
+                ofn.lpstrTitle = title
+                ofn.lpstrDefExt = def_ext
+                ofn.Flags = (
+                    0x00000004  # OFN_HIDEREADONLY
+                    | 0x00000008  # OFN_NOCHANGEDIR
+                    | 0x00000800  # OFN_PATHMUSTEXIST
+                    | 0x00001000  # OFN_FILEMUSTEXIST
+                    | 0x00080000  # OFN_EXPLORER
                 )
-            except Exception as e:
-                logger.warning(f'Native file picker unavailable for {name}: {e}')
-                toast('File picker unavailable, please input path manually.', color='error')
-                return
-            finally:
-                if root is not None:
+
+                if ctypes.windll.comdlg32.GetOpenFileNameW(ctypes.byref(ofn)):
+                    return file_buffer.value
+
+                err = ctypes.windll.comdlg32.CommDlgExtendedError()
+                if err != 0:
+                    raise OSError(f'GetOpenFileNameW failed with code {err}')
+                return ''
+
+            def _pick_file_tk(title: str, ext: str) -> str:
+                label, pattern, _ = _dialog_options(ext)
+                root = None
+                try:
+                    import tkinter as tk
+                    from tkinter import filedialog
+
+                    root = tk.Tk()
+                    root.withdraw()
                     try:
-                        root.destroy()
+                        root.attributes('-topmost', True)
+                        root.update()
                     except Exception:
                         pass
+
+                    return filedialog.askopenfilename(
+                        title=title,
+                        filetypes=[
+                            (label, pattern),
+                            ('All Files', '*.*'),
+                        ],
+                    )
+                finally:
+                    if root is not None:
+                        try:
+                            root.destroy()
+                        except Exception:
+                            pass
+
+            selected = ''
+            picker_errors = []
+            dialog_title = t("Gui.Text.ChooseFile")
+            try:
+                selected = _pick_file_windows_native(dialog_title, accept)
+            except Exception as e:
+                picker_errors.append(f'win32={e}')
+
+            if not selected:
+                try:
+                    selected = _pick_file_tk(dialog_title, accept)
+                except Exception as e:
+                    picker_errors.append(f'tk={e}')
+
+            if not selected and picker_errors:
+                logger.warning(
+                    f'Native file picker unavailable for {name}: {"; ".join(picker_errors)}'
+                )
+                toast('File picker unavailable, please input path manually.', color='error')
+                return
 
             selected = _normalize_windows_path(selected)
             if not selected:
