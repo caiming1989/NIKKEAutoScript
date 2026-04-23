@@ -88,6 +88,11 @@ class LoginHandler(UI):
                 click_timer.reset()
                 continue
 
+            # 阿尼斯5x5补给品
+            if click_timer.reached() and self.handle_anis_supplies():
+                click_timer.reset()
+                continue
+
             # 屑芙蒂5x5补给品
             if click_timer.reached() and self.handle_shifty_supplies():
                 click_timer.reset()

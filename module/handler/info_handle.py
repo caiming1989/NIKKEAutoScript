@@ -86,6 +86,15 @@ class InfoHandler(ModuleBase):
         else:
             return False
 
+    # 阿尼斯的补给品，仅关闭窗口，不抽取
+    def handle_anis_supplies(self):
+        if self.appear(ANIS_SUPPLIES_CHECK, offset=(30, 30)) and self.appear_then_click(
+            ANIS_SUPPLIES_CLOSE, offset=(30, 30), interval=3
+        ):
+            return True
+
+        return False
+
     # 屑芙蒂的补给品，仅关闭窗口，不抽取
     def handle_shifty_supplies(self):
         if self.appear(SHIFTY_SUPPLIES_CHECK, offset=(30, 30)) and self.appear_then_click(
