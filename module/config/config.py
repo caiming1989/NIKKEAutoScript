@@ -487,6 +487,10 @@ class NikkeConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher):
     @property
     def EVENT_COOP(self):
         return self.Coop_EventCoop
+
+    @property
+    def EVENT_EXTEND(self):
+        return getattr(self, 'extend', False)
     
     @property
     def CLIENT_PLATFORM(self):

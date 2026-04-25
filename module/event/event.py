@@ -4,6 +4,7 @@ from module.event.assets import TEMPLATE_SHOP_GEM
 from module.event.base import ChallengeNotFoundError, EventSelectError, EventUnavailableError
 from module.event.challenge import EventChallenge
 from module.event.coop import EventCoop
+from module.event.extend import EventExtend
 from module.event.game import EventGame
 from module.event.login import EventLogin
 from module.event.reward import EventReward
@@ -15,6 +16,7 @@ from module.ui.page import page_main
 
 
 class Event(
+    EventExtend,
     EventLogin,
     EventChallenge,
     EventReward,
@@ -114,6 +116,8 @@ class Event(
                 self.game()
 
             self.reward()
+
+            self.event_extend()
 
             if self.config.Event_Shop:
                 self.shop()
