@@ -2,11 +2,12 @@ import argparse
 import json
 import os
 import queue
+import sys
 import threading
 import time
 from datetime import datetime
 from functools import partial
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 # Import fake module before import pywebio to avoid importing unnecessary module PIL
 # from module.webui.fake_pil_module import import_fake_pil_module
@@ -98,6 +99,183 @@ patch_executor()
 task_handler = TaskHandler()
 
 
+def _current_is_zh() -> bool:
+    return str(lang.LANG or '').lower().startswith('zh')
+
+
+def _normalize_option_value(value: Any) -> Any:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return value
+
+
+def _get_monitor_orientation_label(orientation: int) -> str:
+    if _current_is_zh():
+        mapping = {
+            0: '横向',
+            1: '纵向',
+            2: '横向(翻转)',
+            3: '纵向(翻转)',
+        }
+    else:
+        mapping = {
+            0: 'Landscape',
+            1: 'Portrait',
+            2: 'Landscape (Flipped)',
+            3: 'Portrait (Flipped)',
+        }
+    return mapping.get(orientation, str(orientation))
+
+
+def _query_windows_monitors() -> List[Dict[str, Any]]:
+    if not sys.platform.startswith('win'):
+        return []
+
+    try:
+        import ctypes
+        from ctypes import wintypes
+        import win32api
+        import win32con
+    except Exception as e:
+        logger.warning(f'Failed to import monitor APIs: {e}')
+        return []
+
+    get_scale_factor_for_monitor = None
+    get_dpi_for_monitor = None
+    mdt_effective_dpi = 0
+    try:
+        shcore = ctypes.windll.shcore
+        get_scale_factor_for_monitor = shcore.GetScaleFactorForMonitor
+        get_scale_factor_for_monitor.argtypes = [wintypes.HMONITOR, ctypes.POINTER(ctypes.c_uint)]
+        get_scale_factor_for_monitor.restype = ctypes.c_long
+
+        get_dpi_for_monitor = shcore.GetDpiForMonitor
+        get_dpi_for_monitor.argtypes = [
+            wintypes.HMONITOR,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_uint),
+            ctypes.POINTER(ctypes.c_uint),
+        ]
+        get_dpi_for_monitor.restype = ctypes.c_long
+    except Exception:
+        pass
+
+    monitors: List[Dict[str, Any]] = []
+    try:
+        for idx, (monitor_handle, _, monitor_rect) in enumerate(win32api.EnumDisplayMonitors()):
+            info = win32api.GetMonitorInfo(monitor_handle)
+            monitor = info.get('Monitor') or monitor_rect
+            device_name = str(info.get('Device', f'DISPLAY{idx + 1}'))
+
+            width = int(monitor[2] - monitor[0])
+            height = int(monitor[3] - monitor[1])
+
+            refresh_rate = 0
+            orientation = 0
+            physical_width = width
+            physical_height = height
+            try:
+                dm = win32api.EnumDisplaySettings(device_name, win32con.ENUM_CURRENT_SETTINGS)
+                refresh_rate = int(getattr(dm, 'DisplayFrequency', 0) or 0)
+                orientation = int(getattr(dm, 'DisplayOrientation', 0) or 0)
+                physical_width = int(getattr(dm, 'PelsWidth', 0) or physical_width)
+                physical_height = int(getattr(dm, 'PelsHeight', 0) or physical_height)
+            except Exception:
+                pass
+
+            scale_percent = 0
+            scale_known = False
+            dpi_x = 0
+            monitor_ptr = wintypes.HMONITOR(int(monitor_handle))
+            if get_scale_factor_for_monitor is not None:
+                scale_holder = ctypes.c_uint(0)
+                if get_scale_factor_for_monitor(monitor_ptr, ctypes.byref(scale_holder)) == 0:
+                    if scale_holder.value:
+                        scale_percent = int(scale_holder.value)
+                        scale_known = True
+
+            if get_dpi_for_monitor is not None:
+                dpi_x_holder = ctypes.c_uint(0)
+                dpi_y_holder = ctypes.c_uint(0)
+                if get_dpi_for_monitor(
+                    monitor_ptr,
+                    mdt_effective_dpi,
+                    ctypes.byref(dpi_x_holder),
+                    ctypes.byref(dpi_y_holder),
+                ) == 0:
+                    dpi_x = int(dpi_x_holder.value or 0)
+                    if dpi_x and not scale_known:
+                        scale_percent = int(round(dpi_x * 100 / 96))
+                        scale_known = scale_percent > 0
+
+            if not scale_known:
+                # Fallback: derive scale from physical/logical resolution when possible.
+                inferred_scales = []
+                if width > 0 and physical_width > 0:
+                    inferred_scales.append(int(round(physical_width * 100 / width)))
+                if height > 0 and physical_height > 0:
+                    inferred_scales.append(int(round(physical_height * 100 / height)))
+                if inferred_scales:
+                    scale_percent = max(100, int(round(sum(inferred_scales) / len(inferred_scales))))
+                else:
+                    scale_percent = 100
+
+            monitors.append(
+                {
+                    'index': idx,
+                    'refresh_rate': refresh_rate,
+                    'orientation_label': _get_monitor_orientation_label(orientation),
+                    'physical_width': physical_width,
+                    'physical_height': physical_height,
+                    'scale_percent': scale_percent,
+                }
+            )
+    except Exception as e:
+        logger.warning(f'Failed to enumerate monitors: {e}')
+
+    return monitors
+
+
+def _build_screen_number_options(current_value: Any = None) -> List[Dict[str, Any]]:
+    monitors = _query_windows_monitors()
+    is_zh = _current_is_zh()
+
+    options: List[Dict[str, Any]] = []
+    for monitor in monitors:
+        idx = int(monitor['index'])
+        unknown_text = '未知'
+        if not is_zh:
+            unknown_text = 'N/A'
+        refresh_text = f"{monitor['refresh_rate']}Hz" if monitor['refresh_rate'] else unknown_text
+        physical_resolution = f"{monitor['physical_width']}x{monitor['physical_height']}"
+        resolution_text = f"{physical_resolution} @{monitor['scale_percent']}%"
+        label = (
+            f"{idx} | {resolution_text} | {refresh_text} | "
+            f"{monitor['orientation_label']}"
+        )
+        options.append(
+            {
+                'value': idx,
+                'label': label,
+            }
+        )
+
+    if not options:
+        for i in range(6):
+            options.append({'value': i, 'label': str(i)})
+
+    normalized_value = _normalize_option_value(current_value)
+    if normalized_value is not None and normalized_value not in [opt['value'] for opt in options]:
+        if is_zh:
+            extra_label = f'{normalized_value} | 当前配置(未检测到对应显示器)'
+        else:
+            extra_label = f'{normalized_value} | Current setting (monitor not detected)'
+        options.append({'value': normalized_value, 'label': extra_label})
+
+    return options
+
+
 class NKASGUI(Frame):
     NKAS_MENU: Dict[str, Dict[str, List[str]]]
     NKAS_ARGS: Dict[str, Dict[str, Dict[str, Dict[str, str]]]]
@@ -122,6 +300,117 @@ class NKASGUI(Frame):
         self.inst_cache = []
         self.load_home = False
         self.af_flag = False
+
+    @staticmethod
+    def _is_dynamic_screen_number_arg(task: str, group_name: str, arg_name: str, widget_type: str) -> bool:
+        return (
+            task == 'PCClient'
+            and group_name == 'PCClient'
+            and arg_name == 'ScreenNumber'
+            and widget_type == 'select'
+        )
+
+    @staticmethod
+    def _bind_dynamic_screen_number_select(pin_name: str) -> None:
+        run_js(
+            """
+(() => {
+    const pinName = pin_name;
+    const container = document.getElementById(`pywebio-scope-arg_container-select-${pinName}`);
+    const refreshScope = document.getElementById(`pywebio-scope-dynamic_refresh_${pinName}`);
+
+    if (!container || !refreshScope) {
+        return;
+    }
+    if (container.dataset.screenDynamicBound === '1') {
+        return;
+    }
+    container.dataset.screenDynamicBound = '1';
+
+    let refreshing = false;
+    let lastFetchedAt = 0;
+    const minIntervalMs = 300;
+
+    const refresh = () => {
+        const now = Date.now();
+        if (refreshing || now - lastFetchedAt < minIntervalMs) {
+            return;
+        }
+        const refreshBtn = refreshScope.querySelector('button');
+        if (!refreshBtn) {
+            return;
+        }
+
+        refreshing = true;
+        lastFetchedAt = now;
+
+        try {
+            refreshBtn.click();
+        } catch (error) {
+            console.warn('Failed to refresh ScreenNumber options', error);
+        } finally {
+            setTimeout(() => {
+                refreshing = false;
+            }, 800);
+        }
+    };
+
+    container.addEventListener('pointerdown', refresh);
+    refresh();
+})();
+            """,
+            pin_name=pin_name,
+        )
+
+    @staticmethod
+    def _refresh_dynamic_screen_number_select(pin_name: str) -> None:
+        try:
+            current_value = pin[pin_name]
+        except Exception:
+            current_value = None
+
+        options = _build_screen_number_options(current_value=current_value)
+        run_js(
+            """
+(() => {
+    const pinName = pin_name;
+    const optionList = Array.isArray(options) ? options : [];
+    const container = document.getElementById(`pywebio-scope-arg_container-select-${pinName}`);
+    if (!container || !optionList.length) {
+        return;
+    }
+
+    const selectEl = container.querySelector(`select[name="${pinName}"]`);
+    if (!selectEl) {
+        return;
+    }
+
+    const nextSignature = JSON.stringify(
+        optionList.map((item) => `${String(item.value)}|${String(item.label ?? item.value)}`)
+    );
+    const prevSignature = container.dataset.screenOptionSignature || '';
+    if (nextSignature === prevSignature) {
+        return;
+    }
+    container.dataset.screenOptionSignature = nextSignature;
+
+    const previousValue = String(selectEl.value ?? '');
+    const hasPreviousValue = optionList.some((item) => String(item.value) === previousValue);
+    const nextValue = hasPreviousValue ? previousValue : String(optionList[0].value ?? '');
+
+    selectEl.innerHTML = '';
+    optionList.forEach((item) => {
+        const optionEl = document.createElement('option');
+        optionEl.value = String(item.value);
+        optionEl.textContent = String(item.label ?? item.value);
+        optionEl.selected = String(item.value) === nextValue;
+        selectEl.appendChild(optionEl);
+    });
+})();
+            """,
+            pin_name=pin_name,
+            options=options,
+        )
 
     @use_scope("aside", clear=True)
     def set_aside(self) -> None:
@@ -327,6 +616,7 @@ class NKASGUI(Frame):
         group_name = group[0]
 
         output_list: List[Output] = []
+        dynamic_select_names: List[str] = []
         for arg, arg_dict in deep_iter(arg_dict, depth=1):
             output_kwargs: T_Output_Kwargs = arg_dict.copy()
 
@@ -361,6 +651,11 @@ class NKASGUI(Frame):
             for opt in options:
                 options_label.append(t(f"{group_name}.{arg_name}.{opt}"))
             output_kwargs["options_label"] = options_label
+            if self._is_dynamic_screen_number_arg(task, group_name, arg_name, output_kwargs["widget_type"]):
+                dynamic_options = _build_screen_number_options(current_value=value)
+                output_kwargs["options"] = [item["value"] for item in dynamic_options]
+                output_kwargs["options_label"] = [item["label"] for item in dynamic_options]
+                dynamic_select_names.append(output_kwargs["name"])
             # Help
             arg_help = t(f"{group_name}.{arg_name}.help")
             if arg_help == "" or not arg_help:
@@ -386,6 +681,18 @@ class NKASGUI(Frame):
             put_html('<hr class="hr-group">')
             for output in output_list:
                 output.show()
+            for pin_name in dynamic_select_names:
+                put_scope(
+                    f"dynamic_refresh_{pin_name}",
+                    [
+                        put_button(
+                            label='__refresh__',
+                            onclick=partial(self._refresh_dynamic_screen_number_select, pin_name),
+                        ).style('display:none'),
+                    ],
+                ).style('display:none')
+                self._bind_dynamic_screen_number_select(pin_name)
+                self._refresh_dynamic_screen_number_select(pin_name)
 
         return len(output_list)
 
