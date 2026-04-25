@@ -46,6 +46,12 @@
         "value": ""
       }
     },
+    "Log": {
+      "RetentionDays": {
+        "type": "input",
+        "value": 30
+      }
+    },
     "Notification": {
       "WhenDailyTaskCompleted": {
         "type": "checkbox",

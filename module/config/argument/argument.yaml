@@ -105,6 +105,9 @@ Optimization:
   ScriptPath:
     value: ''
     type: textarea
+Log:
+  RetentionDays:
+    value: 30
 Reward:
   CollectSocialPoint: true
   CollectSpecialArenaPoint: false

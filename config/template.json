@@ -10,6 +10,9 @@
       "WhenTaskQueueEmpty": "goto_main",
       "ScriptPath": null
     },
+    "Log": {
+      "RetentionDays": 30
+    },
     "Notification": {
       "WhenDailyTaskCompleted": false,
       "WhenDailyTaskCrashed": false,

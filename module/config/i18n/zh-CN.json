@@ -484,6 +484,16 @@
       "help": "脚本文件相对路径。Windows 支持 .bat/.ps1/.exe；Linux 支持 .sh，相对路径以脚本根目录为基准。预置脚本位于 `scripts\\windows`。\n例如如果需要执行完成后锁屏则可填写：scripts\\windows\\lock.bat。"
     }
   },
+  "Log": {
+    "_info": {
+      "name": "日志设置",
+      "help": ""
+    },
+    "RetentionDays": {
+      "name": "日志保留时间",
+      "help": "自动清理超过该天数的运行日志和错误日志目录，设置为 0 表示不自动清理。"
+    }
+  },
   "Reward": {
     "_info": {
       "name": "收获",

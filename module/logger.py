@@ -1,8 +1,10 @@
 import datetime
+import json
 import logging
 import os
+import shutil
 import sys
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from rich.console import Console, ConsoleOptions, ConsoleRenderable, NewLine
 from rich.highlighter import NullHighlighter, RegexHighlighter
@@ -151,10 +153,95 @@ os.chdir(os.path.join(os.path.dirname(__file__), '../'))
 pyw_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 logger.info(f'pyw_name: {pyw_name}')
 
+DEFAULT_LOG_RETENTION_DAYS = 30
 
-def _set_file_logger(name=pyw_name):
+
+def _normalize_logger_name(name: str) -> str:
+    name = str(name or pyw_name)
     if '_' in name:
         name = name.split('_', 1)[0]
+    return name
+
+
+def _normalize_log_retention_days(retention_days: Optional[int]) -> int:
+    if retention_days is None:
+        return DEFAULT_LOG_RETENTION_DAYS
+    try:
+        retention_days = int(retention_days)
+    except (TypeError, ValueError):
+        return DEFAULT_LOG_RETENTION_DAYS
+    return max(retention_days, 0)
+
+
+def _get_log_retention_days(name: str) -> int:
+    name = _normalize_logger_name(name)
+    path = f'./config/{name}.json'
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except (FileNotFoundError, OSError, ValueError):
+        return DEFAULT_LOG_RETENTION_DAYS
+    if not isinstance(data, dict):
+        return DEFAULT_LOG_RETENTION_DAYS
+    retention_days = data.get('NKAS', {}).get('Log', {}).get('RetentionDays')
+    return _normalize_log_retention_days(retention_days)
+
+
+def cleanup_old_logs(name=pyw_name, retention_days: Optional[int] = None):
+    if retention_days is None:
+        retention_days = _get_log_retention_days(name)
+    retention_days = _normalize_log_retention_days(retention_days)
+    if retention_days <= 0:
+        return
+
+    log_dir = './log'
+    if not os.path.isdir(log_dir):
+        return
+
+    cutoff_timestamp = (datetime.datetime.now() - datetime.timedelta(days=retention_days)).timestamp()
+    removed_log_files = 0
+    removed_error_entries = 0
+
+    for filename in os.listdir(log_dir):
+        fullpath = os.path.join(log_dir, filename)
+        if not os.path.isfile(fullpath) or not filename.endswith('.txt'):
+            continue
+        try:
+            if os.path.getmtime(fullpath) < cutoff_timestamp:
+                os.remove(fullpath)
+                removed_log_files += 1
+        except FileNotFoundError:
+            continue
+        except OSError as e:
+            logger.warning(f'Failed to delete log file: {fullpath}, error: {e}')
+
+    error_dir = os.path.join(log_dir, 'error')
+    if os.path.isdir(error_dir):
+        for entry in os.listdir(error_dir):
+            fullpath = os.path.join(error_dir, entry)
+            try:
+                if os.path.getmtime(fullpath) >= cutoff_timestamp:
+                    continue
+                if os.path.isdir(fullpath):
+                    shutil.rmtree(fullpath)
+                else:
+                    os.remove(fullpath)
+                removed_error_entries += 1
+            except FileNotFoundError:
+                continue
+            except OSError as e:
+                logger.warning(f'Failed to delete error log entry: {fullpath}, error: {e}')
+
+    if removed_log_files or removed_error_entries:
+        logger.info(
+            f'Log cleanup done (retention={retention_days}d): '
+            f'files={removed_log_files}, error_entries={removed_error_entries}'
+        )
+
+
+def _set_file_logger(name=pyw_name):
+    name = _normalize_logger_name(name)
+    cleanup_old_logs(name=name)
     log_file = f'./log/{datetime.date.today()}_{name}.txt'
     try:
         file = logging.FileHandler(log_file, encoding='utf-8')
@@ -168,9 +255,9 @@ def _set_file_logger(name=pyw_name):
     logger.log_file = log_file
 
 
-def set_file_logger(name=pyw_name):
-    if '_' in name:
-        name = name.split('_', 1)[0]
+def set_file_logger(name=pyw_name, retention_days: Optional[int] = None):
+    name = _normalize_logger_name(name)
+    cleanup_old_logs(name=name, retention_days=retention_days)
     log_file = f'./log/{datetime.date.today()}_{name}.txt'
     try:
         file = open(log_file, mode='a', encoding='utf-8')
@@ -346,4 +433,4 @@ logger.rule = rule
 logger.print = print
 logger.log_file: str
 
-logger.set_file_logger()
+logger.set_file_logger(retention_days=0)

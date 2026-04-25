@@ -60,6 +60,9 @@ class GeneratedConfig:
     Optimization_WhenTaskQueueEmpty = 'goto_main'  # stay_there, goto_main, close_game, run_script
     Optimization_ScriptPath = None
 
+    # Group `Log`
+    Log_RetentionDays = 30
+
     # Group `Reward`
     Reward_CollectSocialPoint = True
     Reward_CollectSpecialArenaPoint = False
