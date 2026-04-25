@@ -3,7 +3,7 @@
     "Client": {
       "Platform": {
         "type": "select",
-        "value": "adb",
+        "value": "win",
         "option": [
           "adb",
           "win"

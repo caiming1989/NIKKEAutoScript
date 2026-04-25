@@ -1,7 +1,7 @@
 {
   "NKAS": {
     "Client": {
-      "Platform": "adb",
+      "Platform": "win",
       "Language": "zh-CN"
     },
     "Optimization": {

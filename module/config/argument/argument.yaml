@@ -16,7 +16,7 @@ Scheduler:
     display: hide
 Client:
   Platform:
-    value: adb
+    value: win
     option: [ adb, win ]
   Language:
     value: zh-CN

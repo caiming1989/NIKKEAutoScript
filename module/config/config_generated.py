@@ -18,7 +18,7 @@ class GeneratedConfig:
     Scheduler_ServerUpdate = '04:00'
 
     # Group `Client`
-    Client_Platform = 'adb'  # adb, win
+    Client_Platform = 'win'  # adb, win
     Client_Language = 'zh-CN'  # zh-CN, en-US
 
     # Group `Emulator`
