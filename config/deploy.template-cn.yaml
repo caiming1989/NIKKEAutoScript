@@ -1,9 +1,9 @@
 Deploy:
   Git:
     # URL of NikkeAutoScript repository
-    # [CN user] Use 'https://gitee.com/megumiss/NIKKEAutoScript' for faster and more stable download
+    # [CN user] Use 'https://git.megimiss.top/megumiss/NIKKEAutoScript' for faster and more stable download
     # [Other] Use 'https://github.com/megumiss/NIKKEAutoScript'
-    Repository: https://gitee.com/megumiss/NIKKEAutoScript
+    Repository: https://git.megimiss.top/megumiss/NIKKEAutoScript
     # Branch of NKAS
     # [Developer] Use 'dev', 'app', etc, to try new features
     # [Other] Use 'master', the stable branch
