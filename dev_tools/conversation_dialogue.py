@@ -12,7 +12,6 @@ import time
 from pathlib import Path
 
 import requests
-from bs4 import BeautifulSoup
 
 # 文件路径配置
 BASE_DIR = Path(__file__).parent.parent
@@ -20,7 +19,8 @@ DIALOGUE_JSON_PATH = BASE_DIR / 'module' / 'conversation' / 'dialogue.zh-CN.json
 
 # 网站配置
 NIKKE_LIST_URL = 'https://www.gamekee.com/nikke/second/64581'
-NIKKE_API_BASE = 'https://nikke.gamekee.com/v1/content/detail'
+WIKI_ENTRY_API = 'https://www.gamekee.com/v1/wiki/entry'
+NIKKE_API_BASE = 'https://www.gamekee.com/v1/content/detail'
 
 # 请求头配置
 HEADERS = {
@@ -38,6 +38,7 @@ session = requests.Session()
 CONTENT_ID_PATTERN = re.compile(r'/nikke/tj/(\d+)\.html')
 QUESTION_PATTERN = re.compile(r'^问题\d+')
 DOTS_PATTERN = re.compile(r'[\.·]{3,}')
+ENTRY_ID_PATTERN = re.compile(r'/second/(\d+)')
 
 
 def load_existing_dialogue():
@@ -59,7 +60,7 @@ def save_dialogue(dialogue_data):
     with DIALOGUE_JSON_PATH.open('w', encoding='utf-8') as f:
         json.dump(dialogue_data, f, ensure_ascii=False, indent=2)
 
-    print(f'✓ 数据已保存到 {DIALOGUE_JSON_PATH}')
+    print(f'[OK] 数据已保存到 {DIALOGUE_JSON_PATH}')
 
 
 def get_nikke_list(limit=None):
@@ -72,51 +73,46 @@ def get_nikke_list(limit=None):
     Returns:
         list: [{name, content_id}, ...]
     """
-    print(f'正在访问 {NIKKE_LIST_URL}')
+    print(f'正在访问 {WIKI_ENTRY_API}')
 
     try:
-        response = session.get(NIKKE_LIST_URL, headers=HEADERS, timeout=30)
+        response = session.get(WIKI_ENTRY_API, headers=GAME_HEADERS, timeout=30)
         response.raise_for_status()
-        response.encoding = 'utf-8'
+        data = response.json()
 
-        soup = BeautifulSoup(response.text, 'lxml')
-
-        # 查找包含 nikke-item-group 的 div
-        nikke_group = soup.find('div', class_=lambda x: x and 'nikke-item-group' in x)
-
-        if not nikke_group:
-            print('警告: 未找到 nikke-item-group 元素')
+        if data.get('code') != 0 or 'data' not in data:
+            print(f"警告: wiki/entry 返回异常: code={data.get('code')} msg={data.get('msg')}")
             return []
 
-        # 查找所有带有 report-id 属性的元素，自动适配 a/div/其他标签
-        items = nikke_group.find_all(attrs={'href': True}, limit=limit)
-        nikke_list = []
-        # 匹配以 .html 结尾前面的数字，或者包含在 nikke 路径下的数字
-        pattern = re.compile(r'(?:nikke|tj).*?(\d+)(?:\.html)?')
-        for item in items:
-            title = item.get('title', '').strip()
-            raw_href = item.get('href', '').strip()
+        entry_list = data['data'].get('entry_list') or []
+        if not entry_list:
+            print('警告: wiki/entry 的 entry_list 为空')
+            return []
 
-            if not title or not raw_href:
+        match = ENTRY_ID_PATTERN.search(NIKKE_LIST_URL)
+        target_entry_id = int(match.group(1)) if match else 64581
+        target_entry = next((x for x in entry_list if x.get('id') == target_entry_id), None)
+        if not target_entry:
+            print(f'警告: 未找到图鉴入口 id={target_entry_id}')
+            return []
+
+        nikke_nodes = []
+        for child in target_entry.get('child') or []:
+            nikke_nodes.extend(child.get('child') or [])
+
+        nikke_list = []
+        for item in nikke_nodes:
+            title = (item.get('name') or '').strip()
+            content_id = item.get('content_id') or 0
+            if not title or content_id <= 0:
                 continue
 
-            # 使用正则提取数字 ID
-            match = pattern.search(raw_href)
-            if match:
-                real_id = match.group(1)
-            else:
-                # 如果正则没匹配到，尝试用 split 分割
-                try:
-                    real_id = raw_href.split('/')[-1].replace('.html', '')
-                    if not real_id.isdigit():  # 如果提取出来的不是纯数字，则跳过
-                        print(f'   [跳过] 无法提取有效ID: {raw_href}')
-                        continue
-                except:
-                    continue
-            nikke_list.append({'name': title, 'content_id': real_id})
-            print(f'   找到角色: {title} (ID: {real_id})')
+            nikke_list.append({'name': title, 'content_id': str(content_id)})
+            print(f'   找到角色: {title} (ID: {content_id})')
+            if limit and len(nikke_list) >= limit:
+                break
 
-        print(f'✓ 共找到 {len(nikke_list)} 个角色')
+        print(f'[OK] 共找到 {len(nikke_list)} 个角色')
         return nikke_list
 
     except Exception as e:
@@ -201,21 +197,21 @@ def get_nikke_dialogue(content_id, nikke_name):
         dialogue_count = len(dialogues)
 
         if dialogue_count == 0:
-            print(f'  ⊘ {nikke_name} 没有对话数据，跳过')
+            print(f'  [SKIP] {nikke_name} 没有对话数据，跳过')
             return nikke_name, None, 'skip'
 
         if dialogue_count < 20:
-            print(f'  ⏳ {nikke_name} 对话数据不完整 ({dialogue_count}/20)，等待')
+            print(f'  [WAIT] {nikke_name} 对话数据不完整 ({dialogue_count}/20)，等待')
             return nikke_name, None, 'waiting'
 
         if dialogue_count > 20:
             print(f'  警告: {nikke_name} 的对话数量超过 20 ({dialogue_count})')
 
-        print(f'  ✓ {nikke_name} 获取成功，共 {dialogue_count} 条对话')
+        print(f'  [OK] {nikke_name} 获取成功，共 {dialogue_count} 条对话')
         return nikke_name, dialogues, 'success'
 
     except Exception as e:
-        print(f'  ✗ 获取 {nikke_name} 的对话数据失败: {e}')
+        print(f'  [ERR] 获取 {nikke_name} 的对话数据失败: {e}')
         import traceback
 
         traceback.print_exc()
@@ -364,7 +360,7 @@ def main():
                 unchanged_count += 1
                 continue
             else:
-                print(f'  ⟳ {nikke_name} 检测到对话内容变化，更新')
+                print(f'  [UPDATE] {nikke_name} 检测到对话内容变化，更新')
 
         # 更新数据 - 新角色追加到最前面
         if is_new:
@@ -377,7 +373,7 @@ def main():
             updated_names.append(nikke_name)
 
         updated_count += 1
-        print(f'  ✓ {nikke_name} 处理完成')
+        print(f'  [OK] {nikke_name} 处理完成')
 
     # 4. 保存数据
     if updated_count > 0:
@@ -391,7 +387,7 @@ def main():
                 f.write(f'新增：{", ".join(added_names)}\n')
             if updated_names:
                 f.write(f'更新：{", ".join(updated_names)}\n')
-        print(f'✓ 更新信息已保存到 {update_info_path}')
+        print(f'[OK] 更新信息已保存到 {update_info_path}')
     else:
         print('\n没有需要更新的数据')
 
