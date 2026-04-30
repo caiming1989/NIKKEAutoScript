@@ -508,7 +508,7 @@ class EventStory(EventBase):
                 if (
                     click_timer.reached()
                     and self.appear(self.STORY_STAGE_11(open_story), offset=80, threshold=0.9)
-                    and self.appear_then_click(self.STORY_STAGE_11(f'{open_story}_clear'), offset=80, threshold=0.9)
+                    and self.appear_then_click(self.STORY_STAGE_11(f'{open_story}'), offset=80, threshold=0.9)
                 ):
                     self.device.sleep(0.5)
                     click_timer.reset()
