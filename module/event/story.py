@@ -396,6 +396,7 @@ class EventStory(EventBase):
                     if self.appear_with_flip_then_click(
                         button,
                         offset=30,
+                        click_offset=self.event.pending_click_offset,
                         threshold=0.9,
                         color_threshold=20,
                         interval=5,

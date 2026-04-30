@@ -103,8 +103,9 @@ class ManualConfig:
             "mini_game": False,
             "mini_game_play": True,
             "extend": True,
-            "story_part": "Story_1",  # Story_1, Story_2
-            "story_difficulty": "Normal"  # Normal, Hard
+            "story_part": "Story_2",  # Story_1, Story_2
+            "story_difficulty": "Normal",  # Normal, Hard
+            "pending_click_offset": (200, 0),
         },
         {
             "event_id": "event_20260409",

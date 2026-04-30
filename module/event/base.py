@@ -21,7 +21,8 @@ class ChallengeNotFoundError(Exception):
 
 
 class EventInfo:
-    def __init__(self, id, name, type, mini_game, mini_game_play, extend, story_part, story_difficulty):
+    def __init__(self, id, name, type, mini_game, mini_game_play, extend, story_part, story_difficulty,
+                 pending_click_offset=(0, 0)):
         self.id: str = id
         self.name: str = name
         self.type: int = type
@@ -30,6 +31,7 @@ class EventInfo:
         self.extend: bool = extend
         self.story_part: str = story_part
         self.story_difficulty: str = story_difficulty
+        self.pending_click_offset = pending_click_offset
 
 
 class EventBase(UI):
@@ -56,11 +58,22 @@ class EventBase(UI):
         event_config = next(
             (e for e in self.config.EVENTS if e.get('event_id') == target_event_id), self.config.EVENTS[0]
         )
+        event_config.setdefault('pending_click_offset', (0, 0))
 
         for k, v in event_config.items():
             self.config.__setattr__(k, v)
 
-        return EventInfo(*event_config.values())
+        return EventInfo(
+            id=event_config.get('event_id'),
+            name=event_config.get('event_name'),
+            type=event_config.get('event_type'),
+            mini_game=event_config.get('mini_game'),
+            mini_game_play=event_config.get('mini_game_play'),
+            extend=event_config.get('extend'),
+            story_part=event_config.get('story_part'),
+            story_difficulty=event_config.get('story_difficulty'),
+            pending_click_offset=event_config.get('pending_click_offset', (0, 0)),
+        )
 
     def back_to_event(self):
         logger.info('Back to event')
