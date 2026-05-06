@@ -41,6 +41,7 @@ class ConfigModel:
     Password: Optional[str] = None
     CDN: Union[str, bool] = False
     Run: Optional[str] = None
+    StartupNoticeDismissedId: Optional[str] = None
 
     # Remote Access
     EnableRemoteAccess: bool = False

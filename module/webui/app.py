@@ -1,4 +1,5 @@
 import argparse
+import html
 import json
 import os
 import queue
@@ -18,6 +19,7 @@ from pywebio import config as webconfig
 from pywebio.input import file_upload, input, input_group, select
 from pywebio.output import (
     Output,
+    PopupSize,
     clear,
     close_popup,
     popup,
@@ -40,7 +42,7 @@ from pywebio.output import (
     use_scope,
 )
 from pywebio.pin import pin, pin_on_change
-from pywebio.session import download, go_app, info, local, register_thread, run_js, set_env
+from pywebio.session import download, eval_js, go_app, info, local, register_thread, run_js, set_env
 from pywebio.platform.page import check_theme
 from starlette.routing import Route
 from starlette.responses import JSONResponse
@@ -1677,6 +1679,150 @@ class NKASGUI(Frame):
                 onclick=goto_update,
             )
 
+        def show_startup_notice_popup_once():
+            notice_path = './config/startup_notice.yaml'
+            if not os.path.exists(notice_path):
+                return
+
+            try:
+                data = read_file(notice_path)
+            except Exception as e:
+                logger.warning(f'Failed to read startup notice: {e}')
+                return
+
+            if not isinstance(data, dict):
+                logger.warning('Invalid startup notice format: root should be an object')
+                return
+
+            title = str(data.get('title', '')).strip()
+            content = str(data.get('content', '')).strip()
+            if not title and not content:
+                return
+            if not title:
+                title = '提示'
+
+            notice_id = str(data.get('id', '')).strip()
+            if not notice_id:
+                logger.warning('Startup notice id is empty')
+                return
+
+            dismissed_notice_id = str(getattr(State.deploy_config, 'StartupNoticeDismissedId', '') or '').strip()
+            if notice_id == dismissed_notice_id:
+                return
+
+            notice_content = html.escape(content).replace('\n', '<br>')
+            if self.theme == 'dark':
+                notice_bg = '#2f3136'
+                notice_text = '#e6e6e6'
+                notice_muted = '#b8c0cc'
+                notice_border = '#454c56'
+                notice_shadow = '0 18px 48px rgba(0, 0, 0, .42)'
+            else:
+                notice_bg = '#ffffff'
+                notice_text = '#26313d'
+                notice_muted = '#5e6b78'
+                notice_border = '#dbe2ea'
+                notice_shadow = '0 18px 48px rgba(22, 34, 51, .18)'
+
+            notice_style = f"""
+            <style>
+                .startup-notice-modal .modal-dialog {{
+                    max-width: 600px;
+                }}
+                .startup-notice-modal .modal-content {{
+                    background: {notice_bg};
+                    border: 1px solid {notice_border};
+                    border-radius: 8px;
+                    box-shadow: {notice_shadow};
+                    overflow: hidden;
+                }}
+                .startup-notice-modal .modal-header {{
+                    padding: 18px 24px 16px;
+                    border-bottom: 1px solid {notice_border};
+                }}
+                .startup-notice-modal .modal-title {{
+                    color: {notice_text};
+                    font-size: 20px;
+                    font-weight: 700;
+                    line-height: 1.3;
+                }}
+                .startup-notice-modal .modal-body {{
+                    padding: 22px 24px 24px;
+                }}
+                .startup-notice-message {{
+                    color: {notice_text};
+                    font-size: 15px;
+                    line-height: 1.7;
+                }}
+                .startup-notice-option {{
+                    display: inline-flex;
+                    align-items: center;
+                    height: 28px;
+                    color: {notice_muted};
+                    font-size: 14px;
+                    line-height: 16px;
+                    margin: 0;
+                    cursor: pointer;
+                }}
+                .startup-notice-option input[type="checkbox"] {{
+                    width: 16px;
+                    height: 16px;
+                    margin: 0 8px 0 0;
+                    flex: 0 0 16px;
+                    position: static;
+                    vertical-align: top;
+                }}
+            </style>
+            """
+            checkbox_id = 'startup-notice-disable-once'
+            checkbox_html = (
+                f'<label class="startup-notice-option" for="{checkbox_id}">'
+                f'<input id="{checkbox_id}" type="checkbox">'
+                '<span>本次不再提示</span>'
+                '</label>'
+            )
+            button_style = (
+                'min-width: 88px; padding: 6px 16px; border-radius: 5px; '
+                'font-weight: 600; box-shadow: none;'
+            )
+
+            def _close_startup_notice():
+                try:
+                    if eval_js(
+                        'document.getElementById(checkbox_id) && document.getElementById(checkbox_id).checked',
+                        checkbox_id=checkbox_id,
+                    ):
+                        State.deploy_config.StartupNoticeDismissedId = notice_id
+                except Exception as e:
+                    logger.warning(f'Failed to parse startup notice checkbox: {e}')
+                close_popup()
+
+            popup(
+                title=title,
+                content=[
+                    put_html(f'{notice_style}<div class="startup-notice-message">{notice_content}</div>'),
+                    put_row(
+                        content=[
+                            put_html(checkbox_html),
+                            put_button('我知道了', onclick=_close_startup_notice, color='primary')
+                            .style(button_style),
+                        ],
+                        size='1fr auto',
+                    ).style('align-items: center; margin-top: 20px;'),
+                ],
+                size=PopupSize.NORMAL,
+                implicit_close=False,
+            )
+            run_js(
+                """
+                const modals = document.querySelectorAll('.modal.show');
+                const modal = modals[modals.length - 1];
+                if (modal) {
+                    modal.classList.add('startup-notice-modal');
+                }
+                """
+            )
+
         update_switch = Switch(
             status={
                 1: lambda: toast(
@@ -1697,6 +1843,7 @@ class NKASGUI(Frame):
         self.task_handler.add(update_switch.g(), 1)
         self.task_handler.start()
         show_auto_update_toast_once()
+        show_startup_notice_popup_once()
 
         # Return to previous page
         if aside not in ["Home", None]:

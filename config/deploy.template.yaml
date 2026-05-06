@@ -99,3 +99,5 @@ Deploy:
     # '["nkas"]' specified "nkas" config
     # '["nkas","nkas2"]' specified "nkas" "nkas2" configs
     Run: null
+    # Startup notice id dismissed by current user
+    StartupNoticeDismissedId: null
