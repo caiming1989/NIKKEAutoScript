@@ -1,5 +1,4 @@
-# id: startup_notice_default
-# title: 启动提示
-# content: |
-#   请确保模拟器已启动并进入游戏主界面后再开始任务。
-#   如遇页面卡住，可先停止任务并重试。
+id: notice_20260507
+title: 活动提示
+content: |
+  阿妮斯剧情活动Story2 Hard不支持自动推图。
