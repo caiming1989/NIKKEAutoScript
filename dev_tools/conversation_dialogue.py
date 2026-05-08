@@ -81,7 +81,7 @@ def get_nikke_list(limit=None):
         data = response.json()
 
         if data.get('code') != 0 or 'data' not in data:
-            print(f"警告: wiki/entry 返回异常: code={data.get('code')} msg={data.get('msg')}")
+            print(f'警告: wiki/entry 返回异常: code={data.get("code")} msg={data.get("msg")}')
             return []
 
         entry_list = data['data'].get('entry_list') or []
@@ -130,6 +130,39 @@ def parse_label_value(group: list):
     return label, value
 
 
+def normalize_url(url):
+    """补全协议相对 URL。"""
+    if url.startswith('//'):
+        return f'https:{url}'
+    return url
+
+
+def fetch_content_json(detail_data, content_id):
+    """读取详情正文，兼容 content_json 为空且正文迁移到 content_cdn 的情况。"""
+    content_json = detail_data.get('content_json') or ''
+    if content_json:
+        return json.loads(content_json)
+
+    content_cdn = detail_data.get('content_cdn') or ''
+    if not content_cdn:
+        raise ValueError('content_json 和 content_cdn 均为空')
+
+    cdn_url = normalize_url(content_cdn)
+    response = session.get(cdn_url, headers={**HEADERS, 'Referer': 'https://www.gamekee.com/'}, timeout=30)
+    if response.status_code == 200 and 'application/json' in response.headers.get('content-type', ''):
+        cdn_data = response.json()
+    else:
+        raise ValueError(
+            f'CDN 请求失败: HTTP {response.status_code}, content-type={response.headers.get("content-type")}'
+        )
+
+    content = cdn_data.get('content') if isinstance(cdn_data, dict) else None
+    if not content:
+        raise ValueError('CDN 响应缺少 content 字段')
+
+    return json.loads(content)
+
+
 def get_nikke_dialogue(content_id, nikke_name):
     """
     获取单个 NIKKE 角色的对话数据
@@ -150,12 +183,12 @@ def get_nikke_dialogue(content_id, nikke_name):
         data = response.json()
 
         # 检查响应格式
-        if 'data' not in data or 'content_json' not in data['data']:
+        if 'data' not in data:
             print(f'  警告: {nikke_name} 的 API 响应格式不正确')
             return nikke_name, None, 'error'
 
-        # 解析 content_json
-        content_json = json.loads(data['data']['content_json'])
+        # 解析 content_json；新版页面正文可能只返回 content_cdn。
+        content_json = fetch_content_json(data['data'], content_id)
         base_data = content_json.get('baseData', [])
 
         if not base_data:
@@ -173,13 +206,15 @@ def get_nikke_dialogue(content_id, nikke_name):
 
         # 从index开始，每3个为一组进行解析，提取对话数据
         dialogues = []
-        index = next(i for i, d in enumerate(base_data[index:]) if d[0].get('value', '').startswith('问题'))
+        index += next(i for i, d in enumerate(base_data[index:]) if d[0].get('value', '').startswith('问题'))
         while 1:
             label, value = parse_label_value(base_data[index])
             if not QUESTION_PATTERN.match(label):
                 break
 
             question = clean_text(value)
+            answer_false = ''
+            answer_true = ''
             for j in (index + 1, index + 2):
                 label, value = parse_label_value(base_data[j])
                 if label == '100好感度':
