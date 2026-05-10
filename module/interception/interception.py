@@ -80,8 +80,6 @@ class Interception(UI):
             raise
 
     def _run(self, skip_first_screenshot=True):
-        click_timer = Timer(0.3)
-
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -91,13 +89,10 @@ class Interception(UI):
             if self.appear(ABNORMAL_INTERCEPTION_CHECK, offset=(10, 30)):
                 break
 
-            if click_timer.reached() and self.appear(
-                self.get_boss_button(self.config.Interception_Boss), offset=10, interval=1
-            ):
+            if self.appear(self.get_boss_button(self.config.Interception_Boss), offset=10, interval=1):
                 logger.info('Click %s @ CHALLANGE' % point2str(360, 1030))
                 self.device.click_minitouch(360, 1030)
                 # self.device.sleep(1)
-                click_timer.reset()
                 continue
 
             if (
@@ -110,7 +105,6 @@ class Interception(UI):
                 logger.info('Click %s @ SWITCH' % point2str(580, 960))
                 self.device.click_minitouch(580, 960)
                 self.device.sleep(0.5)
-                click_timer.reset()
                 continue
 
         self.device.click_record_clear()
@@ -129,12 +123,9 @@ class Interception(UI):
             self.device.screenshot()
 
             # 切换队伍
-            if (
-                click_timer.reached()
-                and self.appear(ABNORMAL_INTERCEPTION_CHECK, offset=(10, 30))
-                and self.appear_then_click(self.teams[teamindex], threshold=10, interval=1)
+            if self.appear(ABNORMAL_INTERCEPTION_CHECK, offset=(10, 30)) and self.appear_then_click(
+                self.teams[teamindex], threshold=30, interval=1
             ):
-                click_timer.reset()
                 continue
 
             # 达到目标等级才快速战斗
@@ -144,12 +135,10 @@ class Interception(UI):
                     self.config.Interception_AchieveLevel == 1
                     or self.battle_quickly_level >= self.config.Interception_AchieveLevel
                 )
-                and click_timer.reached()
                 and self.appear_then_click(BATTLE_QUICKLY, threshold=10)
             ):
                 end_fighting = False
                 self.device.sleep(1)
-                click_timer.reset()
                 continue
 
             #  开启了只快速战斗
@@ -161,17 +150,14 @@ class Interception(UI):
                 logger.warning(f'Quick battle only: {self.config.Interception_QuickBattleOnly}, skip battle')
                 return
 
-            if click_timer.reached() and self.appear_then_click(BATTLE, threshold=25, interval=1):
+            if  self.appear_then_click(BATTLE, threshold=25, interval=1):
                 end_fighting = False
-                click_timer.reset()
                 continue
 
-            if click_timer.reached() and self.appear_then_click(AUTO_SHOOT, offset=(5, 5), threshold=0.9, interval=5):
-                click_timer.reset()
+            if self.appear_then_click(AUTO_SHOOT, offset=(5, 5), threshold=0.9, interval=5):
                 continue
 
-            if click_timer.reached() and self.appear_then_click(AUTO_BURST, offset=(5, 5), threshold=0.9, interval=5):
-                click_timer.reset()
+            if self.appear_then_click(AUTO_BURST, offset=(5, 5), threshold=0.9, interval=5):
                 continue
 
             # 红圈
@@ -179,7 +165,7 @@ class Interception(UI):
                 if self.handle_red_circles():
                     continue
 
-            if click_timer.reached() and self.appear(END_FIGHTING, offset=30):
+            if self.appear(END_FIGHTING, offset=30):
                 saved_path = self.save_drop_image(self.device.image, self.config.Interception_DropScreenshotPath)
                 if saved_path:
                     logger.info(f'Save drop image to: {saved_path}')
@@ -189,13 +175,10 @@ class Interception(UI):
                 while 1:
                     self.device.screenshot()
                     if not self.appear(END_FIGHTING, offset=30):
-                        click_timer.reset()
                         break
                     if self.appear_then_click(END_FIGHTING, offset=30, interval=1):
-                        click_timer.reset()
                         continue
                 end_fighting = True
-                click_timer.reset()
                 continue
 
             if end_fighting:
@@ -538,7 +521,9 @@ def _collect_import_images(base_path: str, config_name: str) -> List[Tuple[date,
     seen: set = set()
 
     for root in _iter_import_roots(base_path, config_name):
-        allow_without_config_folder = bool(config_name) and _has_direct_date_subfolder(root) and not _path_contains_folder(root, config_name)
+        allow_without_config_folder = (
+            bool(config_name) and _has_direct_date_subfolder(root) and not _path_contains_folder(root, config_name)
+        )
         for dirpath, _, filenames in os.walk(root):
             for filename in filenames:
                 ext = os.path.splitext(filename)[1].lower()
@@ -547,7 +532,11 @@ def _collect_import_images(base_path: str, config_name: str) -> List[Tuple[date,
                 full_path = _normalize_import_path(os.path.join(dirpath, filename))
                 if not full_path or full_path in seen:
                     continue
-                if config_name and not allow_without_config_folder and not _path_contains_folder(full_path, config_name):
+                if (
+                    config_name
+                    and not allow_without_config_folder
+                    and not _path_contains_folder(full_path, config_name)
+                ):
                     continue
                 seen.add(full_path)
 
@@ -581,7 +570,10 @@ def import_interception_stone_records_from_screenshots(
 
     entries = _collect_import_images(path, config_name)
     if not entries:
-        return {'ok': False, 'message': f'InterceptionStats: no valid images in date folders (YYYY-MM-DD) under: {path}'}
+        return {
+            'ok': False,
+            'message': f'InterceptionStats: no valid images in date folders (YYYY-MM-DD) under: {path}',
+        }
 
     helper = Interception.__new__(Interception)
     import_template_threshold = 0.64
