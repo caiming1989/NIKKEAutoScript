@@ -207,6 +207,15 @@
         "type": "input",
         "value": ""
       },
+      "ScreenshotMethod": {
+        "type": "select",
+        "value": "pyautogui",
+        "option": [
+          "pyautogui",
+          "mss",
+          "PrintWindow"
+        ]
+      },
       "ScreenshotInterval": {
         "type": "input",
         "value": 0.3

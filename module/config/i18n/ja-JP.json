@@ -451,6 +451,13 @@
       "name": "ゲームプロセス",
       "help": "ゲームプロセスの名前。通常は手動で入力する必要はありません"
     },
+    "ScreenshotMethod": {
+      "name": "スクリーンショット方式",
+      "help": "pyautogui：互換性と安定性は高いですが、速度は遅く、ウィンドウの遮蔽の影響を受けます。\nmss：最速ですが、遮蔽の影響を受けます。\nPrintWindow：mssよりやや遅いですが、遮蔽の影響を受けず、互換性はやや低い可能性があります。",
+      "pyautogui": "pyautogui",
+      "mss": "mss",
+      "PrintWindow": "PrintWindow"
+    },
     "ScreenshotInterval": {
       "name": "スクリーンショット間隔",
       "help": ""

@@ -451,6 +451,13 @@
       "name": "游戏进程",
       "help": "游戏进程的名称，一般无需手动填写"
     },
+    "ScreenshotMethod": {
+      "name": "截图方式",
+      "help": "pyautogui：兼容性高、最稳定，但速度较慢，且会受遮挡影响。\nmss：速度最快，但会受遮挡影响。\nPrintWindow：速度比mss稍慢，不受遮挡影响，兼容性可能稍差。",
+      "pyautogui": "pyautogui",
+      "mss": "mss",
+      "PrintWindow": "PrintWindow"
+    },
     "ScreenshotInterval": {
       "name": "截图间隔",
       "help": ""

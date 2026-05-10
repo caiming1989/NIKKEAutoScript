@@ -194,6 +194,8 @@ more-itertools==10.7.0
     # via cssutils
 mouseinfo==0.1.3
     # via pyautogui
+mss==10.2.0
+    # via -r requirements.in
 multidict==6.6.3
     # via
     #   aiohttp

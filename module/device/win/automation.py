@@ -130,6 +130,7 @@ class Automation:
                     self.current_window.resolution,
                     self.config.PCClient_Screens,
                     crop=crop,
+                    screenshot_method=self.config.PCClientInfo_ScreenshotMethod,
                 )
                 if result:
                     image, pos, scale = result

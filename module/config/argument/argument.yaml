@@ -93,6 +93,9 @@ PCClientInfo:
     value: ''
   GameProcessName:
     value: ''
+  ScreenshotMethod:
+    value: pyautogui
+    option: [ pyautogui, mss, PrintWindow ]
   ScreenshotInterval: 0.3
 Optimization:
   AutoRedCircle: false
