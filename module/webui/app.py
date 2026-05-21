@@ -1787,14 +1787,32 @@ class NKASGUI(Frame):
             )
 
             def _close_startup_notice():
+                checked = False
                 try:
-                    if eval_js(
+                    checked = bool(
+                        eval_js(
                         'document.getElementById(checkbox_id) && document.getElementById(checkbox_id).checked',
                         checkbox_id=checkbox_id,
-                    ):
-                        State.deploy_config.StartupNoticeDismissedId = notice_id
+                        )
+                    )
                 except Exception as e:
                     logger.warning(f'Failed to parse startup notice checkbox: {e}')
+
+                if checked:
+                    try:
+                        State.deploy_config.StartupNoticeDismissedId = notice_id
+                        if isinstance(State.deploy_config.config, dict):
+                            State.deploy_config.config['StartupNoticeDismissedId'] = notice_id
+                        State.deploy_config.write()
+                        deploy_config_path = getattr(State.deploy_config, 'file', './config/deploy.yaml')
+                        logger.info(
+                            f'Startup notice dismissed id saved: {notice_id}, deploy config: {deploy_config_path}'
+                        )
+                    except Exception as e:
+                        deploy_config_path = getattr(State.deploy_config, 'file', './config/deploy.yaml')
+                        logger.warning(
+                            f'Failed to save startup notice dismissed id [{notice_id}] to [{deploy_config_path}]: {e}'
+                        )
                 close_popup()
 
             popup(
