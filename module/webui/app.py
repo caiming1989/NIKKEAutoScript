@@ -1706,6 +1706,11 @@ class NKASGUI(Frame):
                 logger.warning('Startup notice id is empty')
                 return
 
+            try:
+                State.deploy_config.read()
+            except Exception as e:
+                logger.warning(f'Failed to refresh deploy config before startup notice check: {e}')
+
             dismissed_notice_id = str(getattr(State.deploy_config, 'StartupNoticeDismissedId', '') or '').strip()
             if notice_id == dismissed_notice_id:
                 return
