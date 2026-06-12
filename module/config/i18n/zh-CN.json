@@ -621,6 +621,14 @@
       "name": "启用该功能",
       "help": ""
     },
+    "AutoFillCodeManual": {
+      "name": "自动填写代码手册",
+      "help": "根据最近一次仓库统计中五种代码手册的数量，自动填写竞技场商店优先购买。需要先运行仓库统计。"
+    },
+    "CodeManualBuyThreshold": {
+      "name": "代码手册购买阈值",
+      "help": "代码手册数量低于该值时加入竞技场商店优先购买，并按缺口从大到小排序。"
+    },
     "priority": {
       "name": "优先购买",
       "help": "不填写则不购买，填写格式例如: 'ELECTRIC_CODE > MANUAL_SELECTION_BOX'，用一个大于号分开，可以选择的：\nELECTRIC_CODE: 电击代码\nFIRE_CODE: 燃烧代码\nIRON_CODE: 铁甲代码\nWATER_CODE: 水冷代码\nWIND_CODE: 风压代码\nMANUAL_SELECTION_BOX: 代码自选箱\nORNAMENT: 简介装饰品\nWEAPON: 公司武器熔炉\n"

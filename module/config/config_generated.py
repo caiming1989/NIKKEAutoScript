@@ -94,6 +94,8 @@ class GeneratedConfig:
 
     # Group `ArenaShop`
     ArenaShop_enable = False
+    ArenaShop_AutoFillCodeManual = False
+    ArenaShop_CodeManualBuyThreshold = 3000
     ArenaShop_priority = None
 
     # Group `RubbishShop`

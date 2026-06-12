@@ -621,6 +621,14 @@
       "name": "この機能を有効にする",
       "help": ""
     },
+    "AutoFillCodeManual": {
+      "name": "コードマニュアル自動入力",
+      "help": "最新の倉庫統計にある5種類のコードマニュアル数から、アリーナショップの購入優先度を自動入力します。先に倉庫統計を実行してください。"
+    },
+    "CodeManualBuyThreshold": {
+      "name": "コードマニュアル購入しきい値",
+      "help": "この数を下回るコードマニュアルをアリーナショップの購入優先度に追加し、不足数が多い順に並べます。"
+    },
     "priority": {
       "name": "優先購入",
       "help": "記入しない場合、購入しません。記入形式：'ELECTRIC_CODE > MANUAL_SELECTION_BOX'（大なり記号で区切る）。選択可能項目：\nELECTRIC_CODE: エレクトリックコード\nFIRE_CODE: ファイアコード\nIRON_CODE: アイアンコード\nWATER_CODE: ウォーターコード\nWIND_CODE: ウィンドコード\nMANUAL_SELECTION_BOX: コードセレクトボックス\nORNAMENT: プロフィールデコレーション\nWEAPON: 企業武器モールド\n"

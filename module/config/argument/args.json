@@ -808,6 +808,14 @@
         "type": "checkbox",
         "value": false
       },
+      "AutoFillCodeManual": {
+        "type": "checkbox",
+        "value": false
+      },
+      "CodeManualBuyThreshold": {
+        "type": "input",
+        "value": 3000
+      },
       "priority": {
         "type": "textarea",
         "value": ""

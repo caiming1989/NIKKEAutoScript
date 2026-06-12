@@ -154,6 +154,8 @@ GeneralShop:
     type: textarea
 ArenaShop:
   enable: false
+  AutoFillCodeManual: false
+  CodeManualBuyThreshold: 3000
   priority:
     value: ''
     type: textarea

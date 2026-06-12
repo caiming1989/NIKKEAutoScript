@@ -621,6 +621,14 @@
       "name": "Enable this feature",
       "help": ""
     },
+    "AutoFillCodeManual": {
+      "name": "Auto Fill Code Manuals",
+      "help": "Automatically fills Arena Shop purchase priority from the latest warehouse counts for the five code manuals. Run Warehouse Stats first."
+    },
+    "CodeManualBuyThreshold": {
+      "name": "Code Manual Buy Threshold",
+      "help": "Code manuals below this count are added to Arena Shop priority, sorted by shortage descending."
+    },
     "priority": {
       "name": "Purchase Priority",
       "help": "If empty, nothing will be purchased. Format example: 'ELECTRIC_CODE > MANUAL_SELECTION_BOX'. Options include ELECTRIC_CODE, FIRE_CODE, IRON_CODE, WATER_CODE, WIND_CODE, MANUAL_SELECTION_BOX, ORNAMENT, WEAPON"
