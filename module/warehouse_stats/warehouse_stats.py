@@ -41,11 +41,11 @@ class WarehouseStats(UI):
     # 每页可见列数
     GRID_COLS = 5
     # 每页可见行数
-    GRID_ROWS = 7
+    GRID_ROWS = 6
     # 第一个格子（第一行第一列）左上角 X
     GRID_START_X = 118
     # 第一个格子（第一行第一列）左上角 Y
-    GRID_START_Y = 291
+    GRID_START_Y = 323
     # 单个格子宽度
     GRID_CELL_WIDTH = 91
     # 单个格子高度
