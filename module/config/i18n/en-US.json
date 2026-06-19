@@ -1105,6 +1105,10 @@
     "MainStoryMark": {
       "name": "Auto Follow Main Story",
       "help": "When enabled, auto-click main story normal difficulty exclamation marks and hide minimap. May auto-progress main story but is unstable and will miss enemies 100%"
+    },
+    "SearchMonster": {
+      "name": "Search Monster",
+      "help": "In campaign map, automatically find wild monsters and walk to them when there are no story marks."
     }
   },
   "BlaCDKManual": {

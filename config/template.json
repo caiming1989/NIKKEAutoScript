@@ -783,7 +783,8 @@
     "SemiCombat": {
       "SkipStory": false,
       "FightQuickly": false,
-      "MainStoryMark": false
+      "MainStoryMark": false,
+      "SearchMonster": false
     },
     "Storage": {
       "Storage": {}

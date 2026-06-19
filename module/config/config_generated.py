@@ -207,6 +207,7 @@ class GeneratedConfig:
     SemiCombat_SkipStory = False
     SemiCombat_FightQuickly = False
     SemiCombat_MainStoryMark = False
+    SemiCombat_SearchMonster = False
 
     # Group `BlaCDKManual`
     BlaCDKManual_CDK = None

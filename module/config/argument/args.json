@@ -2782,6 +2782,10 @@
       "MainStoryMark": {
         "type": "checkbox",
         "value": false
+      },
+      "SearchMonster": {
+        "type": "checkbox",
+        "value": false
       }
     },
     "Storage": {

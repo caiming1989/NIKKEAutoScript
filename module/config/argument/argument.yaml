@@ -350,6 +350,8 @@ SemiCombat:
     value: false
   MainStoryMark:
     value: false
+  SearchMonster:
+    value: false
 BlaCDKManual:
   CDK:
     value: ''
