@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from module.base.timer import Timer
 from module.logger import logger
-from module.daemon.assets import MAIN_STORY_MAP_CLOSE, MAIN_STORY_MARK_IN, MAIN_STORY_MARK_OUT, MAIN_STORY_NORMAL
+from module.daemon.assets import MAIN_STORY_MAP_CLOSE, MAIN_STORY_MARK_IN, MAIN_STORY_MARK_OUT, MAIN_STORY_NORMAL, TEMPLATE_SWITCH
 from module.daemon.daemon_base import DaemonBase
 from module.event.assets import FIELD_CHANGE
 from module.simulation_room.assets import AUTO_BURST, AUTO_SHOOT, END_FIGHTING, FIGHT, PAUSE
@@ -17,6 +17,7 @@ class SemiCombat(UI, DaemonBase):
         timeout = Timer(600, count=10)
         click_timer = Timer(0.3)
         monster_timer = Timer(5)
+        switch_timer = Timer(5)
 
         while 1:
             self.device.screenshot()
@@ -49,10 +50,17 @@ class SemiCombat(UI, DaemonBase):
                 (self.config.SemiCombat_MainStoryMark or self.config.SemiCombat_SearchMonster)
                 and click_timer.reached()
                 and self.is_in_campaign()
-                and self.appear_then_click(MAIN_STORY_MARK_OUT, offset=30, threshold=0.85, interval=5, static=False)
             ):
-                click_timer.reset()
-                continue
+                if self.appear(MAIN_STORY_MARK_OUT, offset=30, threshold=0.85, interval=5, static=False):
+                    cx, cy = MAIN_STORY_MARK_OUT.location
+                    if 200 <= cx <= 520 and 300 <= cy <= 900:
+                        logger.info(f"MAIN_STORY_MARK_OUT matched near center (player): ({cx:.1f}, {cy:.1f}). Ignoring it.")
+                        if MAIN_STORY_MARK_OUT.name in self.interval_timer:
+                            self.interval_timer[MAIN_STORY_MARK_OUT.name].clear()
+                    else:
+                        self.device.click(MAIN_STORY_MARK_OUT)
+                        click_timer.reset()
+                        continue
 
             # 主线剧情图标，界面内
             if (
@@ -65,11 +73,32 @@ class SemiCombat(UI, DaemonBase):
                 if self.appear_with_scale(MAIN_STORY_MARK_IN, scale_range=(0.7, 1.2), interval=5):
                     cx, cy = MAIN_STORY_MARK_IN.location
                     if 330 <= cx <= 390 and 430 <= cy <= 680:
-                        logger.info(f"MAIN_STORY_MARK_IN matched near player: ({cx:.1f}, {cy:.1f}). Ignoring it.")
+                        logger.info(f"MAIN_STORY_MARK_IN matched near player: ({cx:.1f}, {cy:.1f}). Clicking it directly without offset.")
+                        self.device.click(MAIN_STORY_MARK_IN, click_offset=(0, 0))
+                        click_timer.reset()
+                        continue
                     else:
                         self.device.click(MAIN_STORY_MARK_IN, click_offset=(0, 130))
                         click_timer.reset()
                         continue
+
+            # 寻找机关并前往
+            if (
+                (self.config.SemiCombat_MainStoryMark or self.config.SemiCombat_SearchMonster)
+                and click_timer.reached()
+                and switch_timer.reached()
+                and not self.appear(FIGHT_QUICKLY_ENABLE, threshold=20)
+                and not self.appear(FIGHT, threshold=20)
+                and self.is_in_campaign()
+            ):
+                sim, button = TEMPLATE_SWITCH.match_result(self.device.image, name='SWITCH')
+                if sim > 0.80:
+                    cx, cy = button.location
+                    self.device.click_minitouch(cx, cy)
+                    logger.info(f"Stepping on switch at {(cx, cy)}, similarity={sim:.3f}")
+                    switch_timer.reset()
+                    click_timer.reset()
+                    continue
 
             # 寻找野怪并前往
             if (
@@ -82,6 +111,14 @@ class SemiCombat(UI, DaemonBase):
                 fight_enable = self.appear(FIGHT, threshold=20)
                 logger.info(f"SearchMonster Check: is_in_campaign={in_campaign}, FIGHT_QUICKLY_ENABLE={fq_enable}, FIGHT={fight_enable}")
                 if in_campaign and not fq_enable and not fight_enable:
+                    # 如果主线感叹号已在角色附近，优先等待主线交互，不寻怪
+                    if self.appear_with_scale(MAIN_STORY_MARK_IN, scale_range=(0.7, 1.2)):
+                        cx, cy = MAIN_STORY_MARK_IN.location
+                        if 330 <= cx <= 390 and 430 <= cy <= 680:
+                            logger.info("MAIN_STORY_MARK_IN is near player. Skipping SearchMonster to prioritize story interaction.")
+                            monster_timer.reset()
+                            continue
+
                     coord = self.find_monster_coordinate()
                     if coord:
                         cx, cy = coord
