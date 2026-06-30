@@ -192,9 +192,10 @@ class SemiCombat(UI, DaemonBase):
         sim, button = TEMPLATE_SWITCH.match_result_with_scale(
             self.device.image, scale_range=(0.5, 1.4), scale_step=0.05, name='SWITCH'
         )
+        logger.info(f"Switch detection: best_sim={sim:.3f}, threshold=0.70")
         if sim > 0.70:
             cx, cy = button.location
-            # 排除屏幕边缘（UI 区域）和角色脚下正中心的误匹配
+            # 排除屏幕边缘（UI 区域）
             if cy < 100 or cy > 1050 or cx < 30 or cx > 690:
                 logger.info(f"Switch matched at ({cx}, {cy}) sim={sim:.3f} but in UI area, skipping.")
                 return False
@@ -202,7 +203,13 @@ class SemiCombat(UI, DaemonBase):
             logger.info(f"Stepping on switch at ({cx}, {cy}), similarity={sim:.3f}")
             return True
         else:
-            logger.debug(f"Switch not found (best_sim={sim:.3f})")
+            # 保存截图供调试
+            try:
+                os.makedirs("log", exist_ok=True)
+                cv2.imwrite("log/debug_switch_image.png", self.device.image)
+                logger.info(f"Switch not found (best_sim={sim:.3f}), saved screenshot to log/debug_switch_image.png")
+            except Exception as e:
+                logger.info(f"Switch not found (best_sim={sim:.3f}), failed to save debug image: {e}")
             return False
 
     def is_in_campaign(self):
