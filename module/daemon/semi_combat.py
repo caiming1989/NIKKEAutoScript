@@ -199,10 +199,10 @@ class SemiCombat(UI, DaemonBase):
         best_scale = 1.0
         th, tw = template_gray.shape[:2]
 
-        scale = 0.5
-        while scale <= 1.4:
+        scale = 0.3
+        while scale <= 1.5:
             rw, rh = int(tw * scale), int(th * scale)
-            if rh > image_gray.shape[0] or rw > image_gray.shape[1]:
+            if rh < 15 or rw < 15 or rh > image_gray.shape[0] or rw > image_gray.shape[1]:
                 scale += 0.05
                 continue
             resized = cv2.resize(template_gray, (rw, rh))
@@ -214,8 +214,8 @@ class SemiCombat(UI, DaemonBase):
                 best_scale = scale
             scale += 0.05
 
-        logger.info(f"Switch detection (grayscale): best_sim={best_sim:.3f}, best_scale={best_scale:.2f}, threshold=0.65")
-        if best_sim > 0.65 and best_point is not None:
+        logger.info(f"Switch detection (grayscale): best_sim={best_sim:.3f}, best_scale={best_scale:.2f}, threshold=0.55")
+        if best_sim > 0.55 and best_point is not None:
             rw, rh = int(tw * best_scale), int(th * best_scale)
             cx = best_point[0] + rw // 2
             cy = best_point[1] + rh // 2
