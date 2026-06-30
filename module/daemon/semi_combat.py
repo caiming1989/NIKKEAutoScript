@@ -199,10 +199,10 @@ class SemiCombat(UI, DaemonBase):
         best_scale = 1.0
         th, tw = template_gray.shape[:2]
 
-        scale = 0.3
-        while scale <= 1.5:
+        scale = 0.4
+        while scale <= 1.3:
             rw, rh = int(tw * scale), int(th * scale)
-            if rh < 15 or rw < 15 or rh > image_gray.shape[0] or rw > image_gray.shape[1]:
+            if rh > image_gray.shape[0] or rw > image_gray.shape[1]:
                 scale += 0.05
                 continue
             resized = cv2.resize(template_gray, (rw, rh))
@@ -219,7 +219,8 @@ class SemiCombat(UI, DaemonBase):
             rw, rh = int(tw * best_scale), int(th * best_scale)
             cx = best_point[0] + rw // 2
             cy = best_point[1] + rh // 2
-            if cy < 100 or cy > 1050 or cx < 30 or cx > 690:
+            # 排除顶部UI栏、底部导航栏和屏幕边缘
+            if cy < 150 or cy > 1000 or cx < 50 or cx > 670:
                 logger.info(f"Switch matched at ({cx}, {cy}) sim={best_sim:.3f} but in UI area, skipping.")
                 return False
             self.device.click_minitouch(cx, cy)
