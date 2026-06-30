@@ -48,20 +48,21 @@ class SemiCombat(UI, DaemonBase):
                 continue
 
             # 战斗结束后优先找机关踩（机关通常在野怪旁边，需要先踩机关开门才能继续前进）
-            if (
-                self._post_battle
-                and click_timer.reached()
-                and switch_timer.reached()
-                and self.is_in_campaign()
-                and not self.appear(FIGHT_QUICKLY_ENABLE, threshold=20)
-                and not self.appear(FIGHT, threshold=20)
-            ):
-                if self._find_and_step_switch():
+            if self._post_battle and click_timer.reached() and switch_timer.reached():
+                in_campaign = self.is_in_campaign()
+                fq_visible = self.appear(FIGHT_QUICKLY_ENABLE, threshold=20)
+                fight_visible = self.appear(FIGHT, threshold=20)
+                logger.info(
+                    f"PostBattle switch check: is_in_campaign={in_campaign}, "
+                    f"FIGHT_QUICKLY={fq_visible}, FIGHT={fight_visible}"
+                )
+                if not fq_visible and not fight_visible:
+                    if self._find_and_step_switch():
+                        self._post_battle = False
+                        click_timer.reset()
+                        continue
+                    # 没找到机关，解除 post_battle 状态，恢复正常感叹号跟随
                     self._post_battle = False
-                    click_timer.reset()
-                    continue
-                # 没找到机关，解除 post_battle 状态，恢复正常感叹号跟随
-                self._post_battle = False
 
             # 主线剧情图标，界面外
             if (
