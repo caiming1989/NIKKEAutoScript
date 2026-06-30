@@ -17,7 +17,8 @@ class SemiCombat(UI, DaemonBase):
         timeout = Timer(600, count=10)
         click_timer = Timer(0.3)
         monster_timer = Timer(5)
-        switch_timer = Timer(5)
+        switch_timer = Timer(2)
+        self._post_battle = False
 
         while 1:
             self.device.screenshot()
@@ -42,6 +43,7 @@ class SemiCombat(UI, DaemonBase):
 
             # 进入战斗
             if click_timer.reached() and self.appear_then_click(FIGHT, threshold=20, interval=2):
+                self._post_battle = True
                 click_timer.reset()
                 continue
 
@@ -82,25 +84,7 @@ class SemiCombat(UI, DaemonBase):
                         click_timer.reset()
                         continue
 
-            # 寻找机关并前往
-            if (
-                (self.config.SemiCombat_MainStoryMark or self.config.SemiCombat_SearchMonster)
-                and click_timer.reached()
-                and switch_timer.reached()
-                and not self.appear(FIGHT_QUICKLY_ENABLE, threshold=20)
-                and not self.appear(FIGHT, threshold=20)
-                and self.is_in_campaign()
-            ):
-                sim, button = TEMPLATE_SWITCH.match_result(self.device.image, name='SWITCH')
-                if sim > 0.80:
-                    cx, cy = button.location
-                    self.device.click_minitouch(cx, cy)
-                    logger.info(f"Stepping on switch at {(cx, cy)}, similarity={sim:.3f}")
-                    switch_timer.reset()
-                    click_timer.reset()
-                    continue
-
-            # 寻找野怪并前往
+            # 寻找野怪并前往；清完怪后自动寻找附近机关
             if (
                 self.config.SemiCombat_SearchMonster
                 and click_timer.reached()
@@ -128,10 +112,29 @@ class SemiCombat(UI, DaemonBase):
                         click_timer.reset()
                         continue
                     else:
-                        logger.warning("No monster coordinate detected on campaign map.")
+                        # 没有野怪了，检查附近是否有机关需要踩
+                        if self._find_and_step_switch():
+                            monster_timer.reset()
+                            click_timer.reset()
+                            continue
+                        logger.info("No monster or switch detected on campaign map.")
                 else:
                     logger.info("Skipping SearchMonster because not in campaign map or fight buttons are visible.")
                 monster_timer.reset()
+
+            # 战斗结束返回地图时，也主动检查一次机关
+            if (
+                self._post_battle
+                and click_timer.reached()
+                and switch_timer.reached()
+                and self.is_in_campaign()
+                and not self.appear(FIGHT_QUICKLY_ENABLE, threshold=20)
+                and not self.appear(FIGHT, threshold=20)
+            ):
+                self._post_battle = False
+                if self._find_and_step_switch():
+                    click_timer.reset()
+                    continue
 
             # 跳过剧情
             if (
@@ -148,6 +151,7 @@ class SemiCombat(UI, DaemonBase):
                 continue
 
             if click_timer.reached() and self.appear_then_click(END_FIGHTING, offset=30):
+                self._post_battle = True
                 click_timer.reset()
                 continue
 
@@ -176,6 +180,27 @@ class SemiCombat(UI, DaemonBase):
                 break
             else:
                 timeout.clear()
+
+    def _find_and_step_switch(self):
+        """
+        多尺度匹配寻找地面机关，找到则点击前往踩踏。
+        机关通常在野怪附近，清完怪后触发。
+        """
+        sim, button = TEMPLATE_SWITCH.match_result_with_scale(
+            self.device.image, scale_range=(0.5, 1.4), scale_step=0.05, name='SWITCH'
+        )
+        if sim > 0.70:
+            cx, cy = button.location
+            # 排除屏幕边缘（UI 区域）和角色脚下正中心的误匹配
+            if cy < 100 or cy > 1050 or cx < 30 or cx > 690:
+                logger.info(f"Switch matched at ({cx}, {cy}) sim={sim:.3f} but in UI area, skipping.")
+                return False
+            self.device.click_minitouch(cx, cy)
+            logger.info(f"Stepping on switch at ({cx}, {cy}), similarity={sim:.3f}")
+            return True
+        else:
+            logger.debug(f"Switch not found (best_sim={sim:.3f})")
+            return False
 
     def is_in_campaign(self):
         """

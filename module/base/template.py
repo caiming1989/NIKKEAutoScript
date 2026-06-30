@@ -200,6 +200,52 @@ class Template(Resource):
         button = self._point_to_button(point, image=image, name=name)
         return sim, button
 
+    def match_result_with_scale(self, image, scale_range=(0.7, 1.3), scale_step=0.05, name=None):
+        """
+        Multi-scale template matching that finds the best match across a range of scales.
+
+        Args:
+            image: Screenshot image
+            scale_range (tuple[float, float]): (min_scale, max_scale)
+            scale_step (float): Scale increment
+            name (str): Button name
+
+        Returns:
+            float: Best similarity
+            Button: Best matched button with location
+        """
+        best_sim = -1
+        best_point = None
+        best_scale = 1.0
+
+        scale = scale_range[0]
+        while scale <= scale_range[1]:
+            resized = cv2.resize(self.image, (0, 0), fx=scale, fy=scale)
+            if resized.shape[0] > image.shape[0] or resized.shape[1] > image.shape[1]:
+                scale += scale_step
+                continue
+
+            res = cv2.matchTemplate(image, resized, cv2.TM_CCOEFF_NORMED)
+            _, sim, _, point = cv2.minMaxLoc(res)
+
+            if sim > best_sim:
+                best_sim = sim
+                best_point = point
+                best_scale = scale
+
+            scale += scale_step
+
+        if best_point is None:
+            button = self._point_to_button((0, 0), image=image, name=name)
+            return -1, button
+
+        w, h = int(self.size[0] * best_scale), int(self.size[1] * best_scale)
+        area = (best_point[0], best_point[1], best_point[0] + w, best_point[1] + h)
+        button = Button(area=area, color=(), button=area, name=name or self.name)
+        if image is not None:
+            button.load_color(image)
+        return best_sim, button
+
     def match_multi(self, image, scaling=1.0, similarity=0.85, threshold=3, name=None):
         """
         Args:
