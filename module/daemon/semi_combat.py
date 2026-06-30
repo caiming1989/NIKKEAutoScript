@@ -186,30 +186,52 @@ class SemiCombat(UI, DaemonBase):
 
     def _find_and_step_switch(self):
         """
-        多尺度匹配寻找地面机关，找到则点击前往踩踏。
-        机关通常在野怪附近，清完怪后触发。
+        多尺度灰度匹配寻找地面机关，找到则点击前往踩踏。
+        使用灰度匹配以适应不同地图配色（冰雪、沙漠、丛林等）。
         """
-        sim, button = TEMPLATE_SWITCH.match_result_with_scale(
-            self.device.image, scale_range=(0.5, 1.4), scale_step=0.05, name='SWITCH'
-        )
-        logger.info(f"Switch detection: best_sim={sim:.3f}, threshold=0.70")
-        if sim > 0.70:
-            cx, cy = button.location
-            # 排除屏幕边缘（UI 区域）
+        image = self.device.image
+        image_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        template = TEMPLATE_SWITCH.image
+        template_gray = cv2.cvtColor(template, cv2.COLOR_RGB2GRAY)
+
+        best_sim = -1
+        best_point = None
+        best_scale = 1.0
+        th, tw = template_gray.shape[:2]
+
+        scale = 0.5
+        while scale <= 1.4:
+            rw, rh = int(tw * scale), int(th * scale)
+            if rh > image_gray.shape[0] or rw > image_gray.shape[1]:
+                scale += 0.05
+                continue
+            resized = cv2.resize(template_gray, (rw, rh))
+            res = cv2.matchTemplate(image_gray, resized, cv2.TM_CCOEFF_NORMED)
+            _, sim, _, point = cv2.minMaxLoc(res)
+            if sim > best_sim:
+                best_sim = sim
+                best_point = point
+                best_scale = scale
+            scale += 0.05
+
+        logger.info(f"Switch detection (grayscale): best_sim={best_sim:.3f}, best_scale={best_scale:.2f}, threshold=0.65")
+        if best_sim > 0.65 and best_point is not None:
+            rw, rh = int(tw * best_scale), int(th * best_scale)
+            cx = best_point[0] + rw // 2
+            cy = best_point[1] + rh // 2
             if cy < 100 or cy > 1050 or cx < 30 or cx > 690:
-                logger.info(f"Switch matched at ({cx}, {cy}) sim={sim:.3f} but in UI area, skipping.")
+                logger.info(f"Switch matched at ({cx}, {cy}) sim={best_sim:.3f} but in UI area, skipping.")
                 return False
             self.device.click_minitouch(cx, cy)
-            logger.info(f"Stepping on switch at ({cx}, {cy}), similarity={sim:.3f}")
+            logger.info(f"Stepping on switch at ({cx}, {cy}), similarity={best_sim:.3f}, scale={best_scale:.2f}")
             return True
         else:
-            # 保存截图供调试
             try:
                 os.makedirs("log", exist_ok=True)
-                cv2.imwrite("log/debug_switch_image.png", self.device.image)
-                logger.info(f"Switch not found (best_sim={sim:.3f}), saved screenshot to log/debug_switch_image.png")
+                cv2.imwrite("log/debug_switch_image.png", image)
+                logger.info(f"Switch not found (best_sim={best_sim:.3f}), saved screenshot to log/debug_switch_image.png")
             except Exception as e:
-                logger.info(f"Switch not found (best_sim={sim:.3f}), failed to save debug image: {e}")
+                logger.info(f"Switch not found (best_sim={best_sim:.3f}), failed to save debug image: {e}")
             return False
 
     def is_in_campaign(self):
