@@ -990,6 +990,79 @@
       "help": "Creates dated folders under the path to save drop screenshots. Empty to disable. Example: D:\\\\PCR\\\\NIKKE. Docker users should use a path starting with /app/NIKKEAutoScript"
     }
   },
+  "InterceptionRotation": {
+    "_info": {
+      "name": "Rotation Settings",
+      "help": "When enabled, selects the BOSS by day after the server 04:00 reset."
+    },
+    "Enable": {
+      "name": "Enable Daily Rotation",
+      "help": "When enabled, ignores the BOSS setting above and selects the BOSS from the weekday settings below."
+    },
+    "Monday": {
+      "name": "Monday",
+      "help": "",
+      "Kraken": "Kraken (Stone)",
+      "Indivilia": "Indivilia (Body)",
+      "Harvester": "Harvester (Legs)",
+      "MirrorContainer": "Mirror Container (Arms)",
+      "Ultra": "Ultra (Head)"
+    },
+    "Tuesday": {
+      "name": "Tuesday",
+      "help": "",
+      "Kraken": "Kraken (Stone)",
+      "Indivilia": "Indivilia (Body)",
+      "Harvester": "Harvester (Legs)",
+      "MirrorContainer": "Mirror Container (Arms)",
+      "Ultra": "Ultra (Head)"
+    },
+    "Wednesday": {
+      "name": "Wednesday",
+      "help": "",
+      "Kraken": "Kraken (Stone)",
+      "Indivilia": "Indivilia (Body)",
+      "Harvester": "Harvester (Legs)",
+      "MirrorContainer": "Mirror Container (Arms)",
+      "Ultra": "Ultra (Head)"
+    },
+    "Thursday": {
+      "name": "Thursday",
+      "help": "",
+      "Kraken": "Kraken (Stone)",
+      "Indivilia": "Indivilia (Body)",
+      "Harvester": "Harvester (Legs)",
+      "MirrorContainer": "Mirror Container (Arms)",
+      "Ultra": "Ultra (Head)"
+    },
+    "Friday": {
+      "name": "Friday",
+      "help": "",
+      "Kraken": "Kraken (Stone)",
+      "Indivilia": "Indivilia (Body)",
+      "Harvester": "Harvester (Legs)",
+      "MirrorContainer": "Mirror Container (Arms)",
+      "Ultra": "Ultra (Head)"
+    },
+    "Saturday": {
+      "name": "Saturday",
+      "help": "",
+      "Kraken": "Kraken (Stone)",
+      "Indivilia": "Indivilia (Body)",
+      "Harvester": "Harvester (Legs)",
+      "MirrorContainer": "Mirror Container (Arms)",
+      "Ultra": "Ultra (Head)"
+    },
+    "Sunday": {
+      "name": "Sunday",
+      "help": "",
+      "Kraken": "Kraken (Stone)",
+      "Indivilia": "Indivilia (Body)",
+      "Harvester": "Harvester (Legs)",
+      "MirrorContainer": "Mirror Container (Arms)",
+      "Ultra": "Ultra (Head)"
+    }
+  },
   "InterceptionTeam": {
     "_info": {
       "name": "Team Settings",

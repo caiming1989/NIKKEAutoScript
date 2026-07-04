@@ -405,6 +405,16 @@
       "QuickBattleOnly": false,
       "DropScreenshotPath": null
     },
+    "InterceptionRotation": {
+      "Enable": false,
+      "Monday": "Kraken",
+      "Tuesday": "Kraken",
+      "Wednesday": "Kraken",
+      "Thursday": "Kraken",
+      "Friday": "Kraken",
+      "Saturday": "Kraken",
+      "Sunday": "Kraken"
+    },
     "InterceptionTeam": {
       "Kraken": 1,
       "Indivilia": 2,

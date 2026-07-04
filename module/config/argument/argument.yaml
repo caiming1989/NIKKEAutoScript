@@ -296,6 +296,29 @@ Interception:
   DropScreenshotPath:
     value: ''
     type: textarea
+InterceptionRotation:
+  Enable: false
+  Monday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Tuesday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Wednesday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Thursday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Friday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Saturday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Sunday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
 InterceptionTeam:
   Kraken:
     value: 1

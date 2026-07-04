@@ -1440,6 +1440,89 @@
         "value": ""
       }
     },
+    "InterceptionRotation": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Monday": {
+        "type": "select",
+        "value": "Kraken",
+        "option": [
+          "Kraken",
+          "Indivilia",
+          "Harvester",
+          "MirrorContainer",
+          "Ultra"
+        ]
+      },
+      "Tuesday": {
+        "type": "select",
+        "value": "Kraken",
+        "option": [
+          "Kraken",
+          "Indivilia",
+          "Harvester",
+          "MirrorContainer",
+          "Ultra"
+        ]
+      },
+      "Wednesday": {
+        "type": "select",
+        "value": "Kraken",
+        "option": [
+          "Kraken",
+          "Indivilia",
+          "Harvester",
+          "MirrorContainer",
+          "Ultra"
+        ]
+      },
+      "Thursday": {
+        "type": "select",
+        "value": "Kraken",
+        "option": [
+          "Kraken",
+          "Indivilia",
+          "Harvester",
+          "MirrorContainer",
+          "Ultra"
+        ]
+      },
+      "Friday": {
+        "type": "select",
+        "value": "Kraken",
+        "option": [
+          "Kraken",
+          "Indivilia",
+          "Harvester",
+          "MirrorContainer",
+          "Ultra"
+        ]
+      },
+      "Saturday": {
+        "type": "select",
+        "value": "Kraken",
+        "option": [
+          "Kraken",
+          "Indivilia",
+          "Harvester",
+          "MirrorContainer",
+          "Ultra"
+        ]
+      },
+      "Sunday": {
+        "type": "select",
+        "value": "Kraken",
+        "option": [
+          "Kraken",
+          "Indivilia",
+          "Harvester",
+          "MirrorContainer",
+          "Ultra"
+        ]
+      }
+    },
     "InterceptionTeam": {
       "Kraken": {
         "type": "select",

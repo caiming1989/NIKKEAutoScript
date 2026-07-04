@@ -100,6 +100,7 @@ Ark:
     Interception:
       - Scheduler
       - Interception
+      - InterceptionRotation
       - InterceptionTeam
     RookieArena:
       - Scheduler

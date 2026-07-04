@@ -188,6 +188,16 @@ class GeneratedConfig:
     Interception_QuickBattleOnly = False
     Interception_DropScreenshotPath = None
 
+    # Group `InterceptionRotation`
+    InterceptionRotation_Enable = False
+    InterceptionRotation_Monday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Tuesday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Wednesday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Thursday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Friday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Saturday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Sunday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+
     # Group `InterceptionTeam`
     InterceptionTeam_Kraken = 1  # 1, 2, 3, 4, 5
     InterceptionTeam_Indivilia = 2  # 1, 2, 3, 4, 5

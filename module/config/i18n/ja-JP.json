@@ -990,6 +990,79 @@
       "help": "パスの下に日付フォルダを作成して対応するドロップスクリーンショットを保存します。記入しない場合は保存されません。例：D:\\PCR\\NIKKE。Dockerユーザーは/app/NIKKEAutoScriptで始まるフォルダを記入する必要があります"
     }
   },
+  "InterceptionRotation": {
+    "_info": {
+      "name": "ローテーション設定",
+      "help": "有効にすると、サーバー04:00更新後の日付に従ってBOSSを選択します。"
+    },
+    "Enable": {
+      "name": "日替わりローテーションを有効化",
+      "help": "有効にすると、上のBOSS設定を無視して下の曜日設定からBOSSを選択します。"
+    },
+    "Monday": {
+      "name": "月曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Tuesday": {
+      "name": "火曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Wednesday": {
+      "name": "水曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Thursday": {
+      "name": "木曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Friday": {
+      "name": "金曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Saturday": {
+      "name": "土曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Sunday": {
+      "name": "日曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    }
+  },
   "InterceptionTeam": {
     "_info": {
       "name": "チーム設定",
