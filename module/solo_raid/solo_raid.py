@@ -66,7 +66,6 @@ class SoloRaid(SoloRaidChallenge):
     def solo_raid(self, skip_first_screenshot=True):
         """普通模式战斗/扫荡"""
         logger.hr('Start a solo raid (Normal)')
-        click_timer = Timer(0.3)
 
         while 1:
             if skip_first_screenshot:
@@ -76,67 +75,48 @@ class SoloRaid(SoloRaidChallenge):
 
             # 第七关扫荡
             if (
-                click_timer.reached()
-                and self.appear(SOLO_RAID_CHECK, offset=10)
+                self.appear(SOLO_RAID_CHECK, offset=10)
                 and self.appear(STAGE_SEVEN, offset=(30, 30))
                 and self.appear_then_click(CHALLENGE_QUICKLY_ENABLE, threshold=10, interval=1)
             ):
-                click_timer.reset()
                 continue
 
             # 扫荡票max
-            if (
-                click_timer.reached()
-                and self.appear(FIGHT_QUICKLY_CHECK, offset=10)
-                and self.appear_then_click(FIGHT_QUICKLY_MAX, offset=30, threshold=0.99, interval=1)
+            if self.appear(FIGHT_QUICKLY_CHECK, offset=10) and self.appear_then_click(
+                FIGHT_QUICKLY_MAX, offset=30, threshold=0.99, interval=1
             ):
-                click_timer.reset()
                 continue
 
             # 扫荡确定
             if (
-                click_timer.reached()
-                and self.appear(FIGHT_QUICKLY_CHECK, offset=10)
+                self.appear(FIGHT_QUICKLY_CHECK, offset=10)
                 and self.appear(FIGHT_QUICKLY_MIN, offset=30, threshold=0.99)
                 and self.appear_then_click(CHALLENGE_QUICKLY_CONFIRM, offset=10, interval=1)
             ):
-                click_timer.reset()
                 continue
 
             # 挑战
             if (
-                click_timer.reached()
-                and self.appear(SOLO_RAID_CHECK, offset=10)
+                self.appear(SOLO_RAID_CHECK, offset=10)
                 and self.appear(CHALLENGE_QUICKLY_DISABLE, threshold=10)
                 and self.appear_then_click(CHALLENGE, threshold=10, interval=2)
             ):
-                click_timer.reset()
                 continue
 
             # 挑战确认
-            if (
-                click_timer.reached()
-                and self.appear(CHALLENGE_CONFIRM_CHECK, offset=10)
-                and self.appear_then_click(CHALLENGE_CONFIRM, offset=10, interval=1)
+            if self.appear(CHALLENGE_CONFIRM_CHECK, offset=10) and self.appear_then_click(
+                CHALLENGE_CONFIRM, offset=10, interval=1
             ):
-                click_timer.reset()
                 continue
 
             # 开始战斗
-            if (
-                click_timer.reached()
-                and self.appear(FIGHT_HISTORY, offset=10)
-                and self.appear_then_click(ENTER_FIGHT, offset=10, interval=1)
-            ):
-                click_timer.reset()
+            if self.appear(FIGHT_HISTORY, offset=10) and self.appear_then_click(ENTER_FIGHT, offset=10, interval=1):
                 continue
 
             # 自动射击和爆裂
-            if click_timer.reached() and self.appear_then_click(AUTO_SHOOT, offset=10, threshold=0.9, interval=5):
-                click_timer.reset()
+            if self.appear_then_click(AUTO_SHOOT, offset=10, threshold=0.9, interval=5):
                 continue
-            if click_timer.reached() and self.appear_then_click(AUTO_BURST, offset=10, threshold=0.9, interval=5):
-                click_timer.reset()
+            if self.appear_then_click(AUTO_BURST, offset=10, threshold=0.9, interval=5):
                 continue
             # 红圈
             if self.config.Optimization_AutoRedCircle and self.appear(PAUSE, offset=(5, 5)):
@@ -144,36 +124,28 @@ class SoloRaid(SoloRaidChallenge):
                     continue
 
             # 结束
-            if click_timer.reached() and self.appear(END_FIGHTING, offset=30):
+            if self.appear(END_FIGHTING, offset=30):
                 while 1:
                     self.device.screenshot()
                     if not self.appear(END_FIGHTING, offset=30):
-                        click_timer.reset()
                         break
                     if self.appear_then_click(END_FIGHTING, offset=30, interval=1):
-                        click_timer.reset()
                         continue
-                click_timer.reset()
                 continue
 
             # 结算弹窗
-            if (
-                click_timer.reached()
-                and self.appear(ENEMY_DEFEATED, offset=10)
-                and self.appear_then_click(ENEMY_DEFEATED_CONFIRM, offset=10, interval=1)
+            if self.appear(ENEMY_DEFEATED, offset=10) and self.appear_then_click(
+                ENEMY_DEFEATED_CONFIRM, offset=10, interval=1
             ):
-                click_timer.reset()
                 break
 
             # 扫荡结束
             if (
-                click_timer.reached()
-                and self.appear(SOLO_RAID_CHECK, offset=10)
+                self.appear(SOLO_RAID_CHECK, offset=10)
                 and self.appear(STAGE_SEVEN, offset=(30, 30))
                 and self.appear(CHALLENGE_QUICKLY_DISABLE, threshold=10)
                 and not self.appear(CHALLENGE, threshold=10)
             ):
-                click_timer.reset()
                 break
 
         # 进入单人突击界面
