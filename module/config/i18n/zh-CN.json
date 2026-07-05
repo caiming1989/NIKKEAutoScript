@@ -854,28 +854,7 @@
       "name": "当前活动",
       "help": "",
       "event_20260702": "WAVE TO YOU",
-      "event_20260611": "ARK RANGER",
-      "event_20260528": "Bitter Spice",
-      "event_20260514": "B-SIDE IDOL",
-      "event_20260423": "STAR ANIS",
-      "event_20260409": "Good World",
-      "event_20260319": "2x2 Love",
-      "event_20260303": "ENTER HEAVEN",
-      "event_20260212": "Lycoris Recoil",
-      "event_20260129": "Fatal Maid",
-      "event_20260115": "SIN EDITOR",
-      "event_20251230": "ARK GUARDIAN",
-      "event_20251204": "TERMINUS Ticket",
-      "event_20251120": "BLANK Ticket",
-      "event_20251030": "GODDESS FALL",
-      "event_20251016": "GO! NINJA THIEF!",
-      "event_20250924": "REBORN EVIL",
-      "event_20250904": "COINS IN RUSH",
-      "event_20250807": "ABSOLUTE",
-      "event_20250716": "BOOM! THE GHOST!",
-      "event_20250703s": "OVER THE HORIZON",
-      "event_20250703l": "OuteR: Automata",
-      "event_20250612": "Memories Teller"
+      "event_20260611": "ARK RANGER"
     },
     "StoryPart": {
       "name": "活动章节",
@@ -1009,6 +988,79 @@
     "DropScreenshotPath": {
       "name": "掉落截图路径",
       "help": "会在路径下创建日期文件夹保存对应的掉落截图，不填写则不保存；例如：D:\\PCR\\NIKKE，Docker用户需要填写以/app/NIKKEAutoScript开始的文件夹"
+    }
+  },
+  "InterceptionRotation": {
+    "_info": {
+      "name": "轮换设置",
+      "help": "开启后按服务器 04:00 刷新后的日期选择对应 BOSS"
+    },
+    "Enable": {
+      "name": "启用每日轮换",
+      "help": "开启后将忽略上方 BOSS 设置，按下方星期配置选择 BOSS"
+    },
+    "Monday": {
+      "name": "周一",
+      "help": "",
+      "Kraken": "克拉肯（石头）",
+      "Indivilia": "茵迪维利亚（躯体）",
+      "Harvester": "死神（腿）",
+      "MirrorContainer": "镜像容器（手）",
+      "Ultra": "过激派（头）"
+    },
+    "Tuesday": {
+      "name": "周二",
+      "help": "",
+      "Kraken": "克拉肯（石头）",
+      "Indivilia": "茵迪维利亚（躯体）",
+      "Harvester": "死神（腿）",
+      "MirrorContainer": "镜像容器（手）",
+      "Ultra": "过激派（头）"
+    },
+    "Wednesday": {
+      "name": "周三",
+      "help": "",
+      "Kraken": "克拉肯（石头）",
+      "Indivilia": "茵迪维利亚（躯体）",
+      "Harvester": "死神（腿）",
+      "MirrorContainer": "镜像容器（手）",
+      "Ultra": "过激派（头）"
+    },
+    "Thursday": {
+      "name": "周四",
+      "help": "",
+      "Kraken": "克拉肯（石头）",
+      "Indivilia": "茵迪维利亚（躯体）",
+      "Harvester": "死神（腿）",
+      "MirrorContainer": "镜像容器（手）",
+      "Ultra": "过激派（头）"
+    },
+    "Friday": {
+      "name": "周五",
+      "help": "",
+      "Kraken": "克拉肯（石头）",
+      "Indivilia": "茵迪维利亚（躯体）",
+      "Harvester": "死神（腿）",
+      "MirrorContainer": "镜像容器（手）",
+      "Ultra": "过激派（头）"
+    },
+    "Saturday": {
+      "name": "周六",
+      "help": "",
+      "Kraken": "克拉肯（石头）",
+      "Indivilia": "茵迪维利亚（躯体）",
+      "Harvester": "死神（腿）",
+      "MirrorContainer": "镜像容器（手）",
+      "Ultra": "过激派（头）"
+    },
+    "Sunday": {
+      "name": "周日",
+      "help": "",
+      "Kraken": "克拉肯（石头）",
+      "Indivilia": "茵迪维利亚（躯体）",
+      "Harvester": "死神（腿）",
+      "MirrorContainer": "镜像容器（手）",
+      "Ultra": "过激派（头）"
     }
   },
   "InterceptionTeam": {

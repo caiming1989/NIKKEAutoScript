@@ -243,28 +243,7 @@ EventInfo:
     value: ''
     option: [
       'event_20260702',
-      'event_20260611',
-      'event_20260528',
-      'event_20260514',
-      'event_20260423',
-      'event_20260409',
-      'event_20260319',
-      'event_20260303',
-      'event_20260212',
-      'event_20260129',
-      'event_20260115',
-      'event_20251230',
-      'event_20251204',
-      'event_20251120',
-      'event_20251030',
-      'event_20251016',
-      'event_20250924',
-      'event_20250904',
-      'event_20250807',
-      'event_20250716',
-      'event_20250703s',
-      'event_20250703l',
-      'event_20250612'
+      'event_20260611'
     ]
     display: disabled
   StoryPart:
@@ -317,6 +296,29 @@ Interception:
   DropScreenshotPath:
     value: ''
     type: textarea
+InterceptionRotation:
+  Enable: false
+  Monday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Tuesday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Wednesday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Thursday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Friday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Saturday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
+  Sunday:
+    value: 'Kraken'
+    option: [ 'Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra' ]
 InterceptionTeam:
   Kraken:
     value: 1

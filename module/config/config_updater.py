@@ -10,6 +10,7 @@ from deploy.utils import DEPLOY_TEMPLATE, poor_yaml_read, poor_yaml_write
 from module.base.timer import timer
 from module.config.deep import deep_default, deep_get, deep_iter, deep_pop, deep_set
 from module.config.env import IS_ON_PHONE_CLOUD
+from module.config.manual_config import ManualConfig
 from module.config.server import VALID_CHANNEL_PACKAGE, VALID_PACKAGE
 from module.config.utils import *
 
@@ -103,6 +104,14 @@ class ConfigGenerator:
             <i18n_key>: value, value is None
         """
         return read_file(filepath_argument('gui'))
+
+    @cached_property
+    def event_name(self):
+        return {
+            event.get('event_id'): event.get('event_name')
+            for event in ManualConfig.EVENTS
+            if event.get('event_id') is not None and event.get('event_name') is not None
+        }
 
     @cached_property
     @timer
@@ -250,6 +259,11 @@ class ConfigGenerator:
             deep_load(path)
             if 'option' in data:
                 deep_load(path, words=data['option'], default=False)
+                if path == ['EventInfo', 'Event']:
+                    for event_id in data['option']:
+                        event_name = self.event_name.get(event_id)
+                        if event_name is not None:
+                            deep_set(new, keys=path + [str(event_id)], value=event_name)
 
         # GUI i18n
         for path, _ in deep_iter(self.gui, depth=2):

@@ -156,7 +156,7 @@ class GeneratedConfig:
     BlaExchange_Priority = 'Gem_×320 > Gem_×120 > Gem_×60 > Gem_×30 > Welcome_Gift_Core_Dust_×30'
 
     # Group `EventInfo`
-    EventInfo_Event = ''  # event_20260702, event_20260611, event_20260528, event_20260514, event_20260423, event_20260409, event_20260319, event_20260303, event_20260212, event_20260129, event_20260115, event_20251230, event_20251204, event_20251120, event_20251030, event_20251016, event_20250924, event_20250904, event_20250807, event_20250716, event_20250703s, event_20250703l, event_20250612
+    EventInfo_Event = ''  # event_20260702, event_20260611
     EventInfo_StoryPart = 'Story_1'  # Story_1, Story_2
     EventInfo_StoryDifficulty = 'Normal'  # Normal, Hard
 
@@ -187,6 +187,16 @@ class GeneratedConfig:
     Interception_AchieveLevel = 1  # 1, 2, 3, 4, 5, 6, 7, 8, 9
     Interception_QuickBattleOnly = False
     Interception_DropScreenshotPath = None
+
+    # Group `InterceptionRotation`
+    InterceptionRotation_Enable = False
+    InterceptionRotation_Monday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Tuesday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Wednesday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Thursday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Friday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Saturday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
+    InterceptionRotation_Sunday = 'Kraken'  # Kraken, Indivilia, Harvester, MirrorContainer, Ultra
 
     # Group `InterceptionTeam`
     InterceptionTeam_Kraken = 1  # 1, 2, 3, 4, 5

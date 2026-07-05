@@ -854,28 +854,7 @@
       "name": "開催中のイベント",
       "help": "",
       "event_20260702": "WAVE TO YOU",
-      "event_20260611": "ARK RANGER",
-      "event_20260528": "Bitter Spice",
-      "event_20260514": "B-SIDE IDOL",
-      "event_20260423": "STAR ANIS",
-      "event_20260409": "Good World",
-      "event_20260319": "2x2 Love",
-      "event_20260303": "ENTER HEAVEN",
-      "event_20260212": "Lycoris Recoil",
-      "event_20260129": "Fatal Maid",
-      "event_20260115": "SIN EDITOR",
-      "event_20251230": "ARK GUARDIAN",
-      "event_20251204": "TERMINUS Ticket",
-      "event_20251120": "BLANK Ticket",
-      "event_20251030": "GODDESS FALL",
-      "event_20251016": "GO! NINJA THIEF!",
-      "event_20250924": "REBORN EVIL",
-      "event_20250904": "COINS IN RUSH",
-      "event_20250807": "ABSOLUTE",
-      "event_20250716": "BOOM! THE GHOST!",
-      "event_20250703s": "OVER THE HORIZON",
-      "event_20250703l": "OuteR: Automata",
-      "event_20250612": "Memories Teller"
+      "event_20260611": "ARK RANGER"
     },
     "StoryPart": {
       "name": "ストーリーパート",
@@ -1009,6 +988,79 @@
     "DropScreenshotPath": {
       "name": "ドロップスクリーンショットパス",
       "help": "パスの下に日付フォルダを作成して対応するドロップスクリーンショットを保存します。記入しない場合は保存されません。例：D:\\PCR\\NIKKE。Dockerユーザーは/app/NIKKEAutoScriptで始まるフォルダを記入する必要があります"
+    }
+  },
+  "InterceptionRotation": {
+    "_info": {
+      "name": "ローテーション設定",
+      "help": "有効にすると、サーバー04:00更新後の日付に従ってBOSSを選択します。"
+    },
+    "Enable": {
+      "name": "日替わりローテーションを有効化",
+      "help": "有効にすると、上のBOSS設定を無視して下の曜日設定からBOSSを選択します。"
+    },
+    "Monday": {
+      "name": "月曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Tuesday": {
+      "name": "火曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Wednesday": {
+      "name": "水曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Thursday": {
+      "name": "木曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Friday": {
+      "name": "金曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Saturday": {
+      "name": "土曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
+    },
+    "Sunday": {
+      "name": "日曜日",
+      "help": "",
+      "Kraken": "クラーケン（石）",
+      "Indivilia": "インディヴィリア（躯体）",
+      "Harvester": "ハーベスター（脚）",
+      "MirrorContainer": "ミラーコンテナ（手）",
+      "Ultra": "過激派（頭）"
     }
   },
   "InterceptionTeam": {

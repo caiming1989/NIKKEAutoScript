@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from functools import cached_property
 from typing import List, Optional, Tuple
 
@@ -8,6 +8,7 @@ import numpy as np
 
 from module.base.timer import Timer
 from module.base.utils import load_image, point2str
+from module.config.utils import server_timezone
 from module.interception.assets import *
 from module.interception.data import (
     append_interception_stone_record,
@@ -26,6 +27,10 @@ from module.warehouse_stats.warehouse_stats import WarehouseStats
 
 class NoOpportunity(Exception):
     pass
+
+
+INTERCEPTION_BOSSES = ('Kraken', 'Indivilia', 'Harvester', 'MirrorContainer', 'Ultra')
+INTERCEPTION_ROTATION_WEEKDAYS = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
 
 
 class Interception(UI):
@@ -79,7 +84,23 @@ class Interception(UI):
             logger.error(f"Button asset '{button_name}' not found for option '{boss}'")
             raise
 
+    def get_current_boss(self) -> str:
+        boss = self.config.Interception_Boss
+        if not self.config.InterceptionRotation_Enable:
+            return boss
+
+        game_day = datetime.now(timezone.utc) + server_timezone() - timedelta(hours=4)
+        weekday = INTERCEPTION_ROTATION_WEEKDAYS[game_day.weekday()]
+        rotation_boss = getattr(self.config, f'InterceptionRotation_{weekday}', 'Kraken')
+        if rotation_boss not in INTERCEPTION_BOSSES:
+            logger.warning(f'Invalid interception rotation boss: {rotation_boss}, fallback to Kraken')
+            return 'Kraken'
+
+        logger.info(f'Interception daily rotation: weekday={weekday}, boss={rotation_boss}')
+        return rotation_boss
+
     def _run(self, skip_first_screenshot=True):
+        boss = self.get_current_boss()
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -89,7 +110,7 @@ class Interception(UI):
             if self.appear(ABNORMAL_INTERCEPTION_CHECK, offset=(10, 30)):
                 break
 
-            if self.appear(self.get_boss_button(self.config.Interception_Boss), offset=10, interval=1):
+            if self.appear(self.get_boss_button(boss), offset=10, interval=1):
                 logger.info('Click %s @ CHALLANGE' % point2str(360, 1030))
                 self.device.click_minitouch(360, 1030)
                 # self.device.sleep(1)
@@ -101,7 +122,7 @@ class Interception(UI):
                 or self.appear(INDIVILIA, offset=10)
                 or self.appear(MIRRORCONTAINER, offset=10)
                 or self.appear(ULTRA, offset=10)
-            ) and not self.appear(self.get_boss_button(self.config.Interception_Boss), offset=10):
+            ) and not self.appear(self.get_boss_button(boss), offset=10):
                 logger.info('Click %s @ SWITCH' % point2str(580, 960))
                 self.device.click_minitouch(580, 960)
                 self.device.sleep(0.5)
@@ -117,7 +138,7 @@ class Interception(UI):
         ):
             end_fighting = True
         # 使用的队伍
-        teamindex = getattr(self.config, f'InterceptionTeam_{self.config.Interception_Boss}') - 1
+        teamindex = getattr(self.config, f'InterceptionTeam_{boss}') - 1
         load_check_timer = Timer(1, count=3)
         while 1:
             self.device.screenshot()
@@ -170,7 +191,7 @@ class Interception(UI):
                 if saved_path:
                     logger.info(f'Save drop image to: {saved_path}')
                 stone_count = self.recognize_drop_stone_count(self.device.image)
-                self.write_drop_stone_record(stone_count=stone_count, screenshot_path=saved_path or '')
+                self.write_drop_stone_record(stone_count=stone_count, screenshot_path=saved_path or '', boss=boss)
 
                 while 1:
                     self.device.screenshot()
@@ -422,18 +443,19 @@ class Interception(UI):
         x1, y1, x2, y2 = area
         return (x1 + x2) // 2, (y1 + y2) // 2
 
-    def write_drop_stone_record(self, stone_count: int, screenshot_path: str = '') -> None:
+    def write_drop_stone_record(self, stone_count: int, screenshot_path: str = '', boss: str = '') -> None:
+        boss = boss or self.get_current_boss()
         csv_path = self.config.InterceptionDropStats_CsvPath
         ok = append_interception_stone_record(
             csv_path=csv_path,
             config_name=self.config.config_name,
-            boss=self.config.Interception_Boss,
+            boss=boss,
             stone_count=stone_count,
             screenshot_path=screenshot_path,
         )
         if ok:
             logger.info(
-                f'InterceptionStats: record saved, boss={self.config.Interception_Boss}, '
+                f'InterceptionStats: record saved, boss={boss}, '
                 f'stone_count={stone_count}, csv={csv_path}'
             )
 
