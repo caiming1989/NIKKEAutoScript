@@ -381,7 +381,7 @@ class Overclock(UI):
         self.disable_bios_setting()
         # 根据列表选择选项
         if self.config.Overclock_AlwaysReselect or self.appear(
-            OVERCLOCK_BIOS_SETTING_RATIO_1, offset=10, threshold=0.95
+            OVERCLOCK_BIOS_SETTING_RATIO_1, offset=30, threshold=0.95
         ):
             self.select_bios_setting()
 
@@ -390,7 +390,7 @@ class Overclock(UI):
             self.device.screenshot()
 
             # 开始模拟
-            if click_timer.reached() and self.appear_then_click(OVERCLOCK_START_SIMULATION, offset=10, interval=2):
+            if click_timer.reached() and self.appear_then_click(OVERCLOCK_START_SIMULATION, offset=30, interval=2):
                 click_timer.reset()
                 continue
 
@@ -401,7 +401,6 @@ class Overclock(UI):
     def select_bios_setting(self, skip_first_screenshot=True):
         """选择BIOS设置"""
         logger.info('Select overclock bios setting')
-        click_timer = Timer(0.3)
         # 创建一个剩余选项列表，初始包含所有选项
         remaining_options = [line.strip() for line in self.config.Overclock_ModifierList.split('\n') if line.strip()]
 
@@ -430,8 +429,7 @@ class Overclock(UI):
             # logger.debug(f'Current BIOS level: {current_level}/{self.get_total_bios_level}')
 
             # 展开选项
-            if click_timer.reached() and self.appear_then_click(OVERCLOCK_BIOS_SETTING_EXPAND, offset=10, interval=2):
-                click_timer.reset()
+            if self.appear_then_click(OVERCLOCK_BIOS_SETTING_EXPAND, offset=30, interval=2):
                 self.device.sleep(1)
                 continue
 
@@ -442,7 +440,6 @@ class Overclock(UI):
                 if self.appear(button, offset=450, threshold=0.95):
                     self.device.click(button)
                     self.device.sleep(0.3)
-                    click_timer.reset()
                     found = True
                     # 从剩余选项中移除已选择的选项
                     remaining_options.remove(option)
@@ -457,7 +454,6 @@ class Overclock(UI):
 
     def disable_bios_setting(self, skip_first_screenshot=True):
         logger.info('Disable overclock bios setting')
-        click_timer = Timer(0.3)
 
         srolled = False
         while 1:
@@ -467,21 +463,19 @@ class Overclock(UI):
                 self.device.screenshot()
 
             # 检查是否为1
-            if self.appear(OVERCLOCK_BIOS_SETTING_RATIO_1, offset=10, threshold=0.95):
+            if self.appear(OVERCLOCK_BIOS_SETTING_RATIO_1, offset=30, threshold=0.95):
                 logger.info('BIOS setting level reached 1')
                 break
 
             # 展开选项
-            if click_timer.reached() and self.appear_then_click(OVERCLOCK_BIOS_SETTING_EXPAND, offset=10, interval=2):
-                click_timer.reset()
+            if self.appear_then_click(OVERCLOCK_BIOS_SETTING_EXPAND, offset=30, interval=2):
                 self.device.sleep(1)
                 continue
 
             # 取消选中的选项
-            if click_timer.reached() and self.appear_then_click(
+            if self.appear_then_click(
                 OVERCLOCK_BIOS_SETTING_DISABLE, offset=(300, 275), click_offset=(0, -40), threshold=0.6, static=False
             ):
-                click_timer.reset()
                 self.device.sleep(0.3)
                 continue
 
