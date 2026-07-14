@@ -487,7 +487,7 @@
       "run_script": "运行脚本"
     },
     "ScriptPath": {
-      "name": "脚本路径",
+      "name": "清空后执行脚本",
       "help": "脚本文件相对路径。Windows 支持 .bat/.ps1/.exe；Linux 支持 .sh，相对路径以脚本根目录为基准。预置脚本位于 `scripts\\windows`。\n例如如果需要执行完成后锁屏则可填写：scripts\\windows\\lock.bat。"
     }
   },
