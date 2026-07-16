@@ -142,4 +142,10 @@ Support: Hanpass PandaRemit WireBarley GmoneyTrans Debunk PayForex koala transfe
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=megumiss/NIKKEAutoScript&type=Timeline)](https://www.star-history.com/#megumiss/NIKKEAutoScript&Timeline)
+<a href="https://www.star-history.com/?repos=megumiss%2FNIKKEAutoScript&type=timeline&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=megumiss/NIKKEAutoScript&type=timeline&theme=dark&legend=top-left&sealed_token=BPZL8ZE82EG9-HEObLH81ozFeYcjdLWHjDA_rfsZiT1j1gs6cRUutdvfrFxKlsK2y2Bwa8DrT4FDfUtcIGGZ26pa6q0CkkxPwUSU9Ap-zws-fT1Xrt5dGxY1XjWJiXqRlYsc55GEajv5sJRSJ3-UUhpse6XH-l10Ohjqc5GCl3b9b_GpGHYhkk6Gx-QJ" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=megumiss/NIKKEAutoScript&type=timeline&legend=top-left&sealed_token=BPZL8ZE82EG9-HEObLH81ozFeYcjdLWHjDA_rfsZiT1j1gs6cRUutdvfrFxKlsK2y2Bwa8DrT4FDfUtcIGGZ26pa6q0CkkxPwUSU9Ap-zws-fT1Xrt5dGxY1XjWJiXqRlYsc55GEajv5sJRSJ3-UUhpse6XH-l10Ohjqc5GCl3b9b_GpGHYhkk6Gx-QJ" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=megumiss/NIKKEAutoScript&type=timeline&legend=top-left&sealed_token=BPZL8ZE82EG9-HEObLH81ozFeYcjdLWHjDA_rfsZiT1j1gs6cRUutdvfrFxKlsK2y2Bwa8DrT4FDfUtcIGGZ26pa6q0CkkxPwUSU9Ap-zws-fT1Xrt5dGxY1XjWJiXqRlYsc55GEajv5sJRSJ3-UUhpse6XH-l10Ohjqc5GCl3b9b_GpGHYhkk6Gx-QJ" />
+ </picture>
+</a>
