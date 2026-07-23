@@ -113,6 +113,12 @@ class EventStory(EventBase):
             ):
                 logger.warning('Not in story list page, retry')
                 return 'retry'
+            # 关卡推完回到了关卡列表
+            if self.appear(self.STORY_STAGE_12(open_story), offset=80, threshold=0.9) and self.appear(
+                self.STORY_STAGE_12(f'{open_story}_clear'), offset=80, threshold=0.9
+            ):
+                logger.warning('Story push done, stage 12 cleared')
+                return 'done'
             point = base_x + shift_x, base_y + shift_y
             if not 0 <= point[0] < width or not 0 <= point[1] < height:
                 logger.warning(f'Grid pending point {index} out of screen after shift: {point}')
@@ -513,6 +519,8 @@ class EventStory(EventBase):
                         if result == 'retry':
                             grid_retry_timer.reset()
                             continue
+                        if result == 'done':
+                            return
                 else:
                     was_clicked = False
                     for button in pending_buttons:
