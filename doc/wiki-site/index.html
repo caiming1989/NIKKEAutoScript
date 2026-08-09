@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文档 - NIKKEAutoScript</title>
+<link rel="icon" type="image/png" href="/nkas.png">
+<meta name="description" content="NIKKEAutoScript 使用文档：安装指南、PC端/模拟器使用指南、配置教程、常见问题。">
+<meta name="robots" content="index,follow">
+<script>
+/* 首屏前确定主题，与主站逻辑一致：优先手动选择（共享 localStorage），否则按时间（19:00 - 07:00 暗色） */
+(function () {
+    var saved = null;
+    try { saved = localStorage.getItem('nkas-theme'); } catch (e) {}
+    if (saved === 'light' || saved === 'dark') {
+        document.documentElement.dataset.theme = saved;
+        return;
+    }
+    var h = new Date().getHours();
+    document.documentElement.dataset.theme = (h >= 19 || h < 7) ? 'dark' : 'light';
+})();
+</script>
+<style>
+/* ======================================================================
+   样式完全自写（不依赖 docsify 官方主题），与主站共用设计变量，
+   浅色/暗色都走变量，避免基础主题与覆盖补丁互相打架。
+   ====================================================================== */
+:root {
+    --bg: #f7f8fc;
+    --bg-2: rgba(255,255,255,.72);
+    --nav-bg: rgba(255,255,255,.85);
+    --card: #ffffff;
+    --card-border: #e6e8f0;
+    --text: #1c2333;
+    --text-dim: #67708a;
+    --accent: #4f6ef7;
+    --accent-2: #12b5a5;
+    --gradient: linear-gradient(135deg, #4f6ef7 0%, #12b5a5 100%);
+    --code-bg: #eef1fe;
+    --table-alt: #f2f4fa;
+    --nav-height: 56px;
+    --sidebar-width: 280px;
+}
+[data-theme="dark"] {
+    --bg: #0e1220;
+    --bg-2: rgba(23,28,46,.72);
+    --nav-bg: rgba(14,18,32,.78);
+    --card: #171c2e;
+    --card-border: #262e4a;
+    --text: #e6eaf5;
+    --text-dim: #98a1bd;
+    --accent: #7b93ff;
+    --accent-2: #2dd4c4;
+    --gradient: linear-gradient(135deg, #7b93ff 0%, #2dd4c4 100%);
+    --code-bg: #0d1120;
+    --table-alt: #1a2033;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Kaku Gothic ProN", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+    transition: background .3s, color .3s;
+}
+
+/* ===== 顶部导航（复刻主站） ===== */
+.site-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+    display: flex; align-items: center; justify-content: space-between;
+    height: var(--nav-height);
+    padding: 0 48px;
+    background: var(--nav-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--card-border);
+}
+.site-nav .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none;
+    white-space: nowrap;
+}
+.site-nav .brand img { width: 34px; height: 34px; border-radius: 8px; }
+.site-nav .links { display: flex; gap: 28px; align-items: center; }
+.site-nav .links > a {
+    color: var(--text-dim); text-decoration: none; font-size: 14px; transition: color .2s;
+    white-space: nowrap;
+}
+.site-nav .links > a:hover { color: var(--text); }
+.site-nav .links > a.active { color: var(--text); font-weight: 600; }
+.site-nav .gh-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    color: #fff !important; text-decoration: none;
+    background: var(--gradient);
+    transition: transform .15s, box-shadow .15s;
+    white-space: nowrap;
+}
+.site-nav .gh-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,110,247,.30); }
+.site-nav .theme-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px; flex: none;
+    border: 1px solid var(--card-border); background: transparent;
+    color: var(--text-dim); font-size: 15px; cursor: pointer;
+    transition: all .15s; font-family: inherit;
+}
+.site-nav .theme-toggle:hover { border-color: var(--accent); color: var(--text); }
+
+/* 语言切换（同主站样式） */
+.site-nav .lang-switch { display: flex; flex: none; border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; }
+.site-nav .lang-switch button {
+    border: none; background: transparent; color: var(--text-dim);
+    font-size: 12.5px; font-weight: 600; padding: 6px 11px; cursor: pointer;
+    font-family: inherit; transition: all .15s;
+}
+.site-nav .lang-switch button.active { background: var(--gradient); color: #fff; }
+.site-nav .lang-switch button:not(.active):hover { color: var(--text); }
+
+/* ===== docsify 布局（自写，替代官方主题） ===== */
+main { display: block; padding-top: var(--nav-height); }
+.sidebar {
+    position: fixed; top: var(--nav-height); bottom: 0; left: 0;
+    width: var(--sidebar-width);
+    overflow-y: auto; overscroll-behavior: contain;
+    background: var(--bg-2);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-right: 1px solid var(--card-border);
+    padding: 0 0 40px;
+    z-index: 200;
+    transition: transform .25s ease;
+}
+.content {
+    margin-left: var(--sidebar-width);
+    padding: 28px 0 0;
+    min-height: calc(100vh - var(--nav-height));
+    transition: margin .25s ease;
+}
+
+/* 汉堡按钮：仅移动端显示 */
+.sidebar-toggle {
+    position: fixed; top: calc(var(--nav-height) + 10px); left: 10px; z-index: 210;
+    display: none;
+    width: 36px; height: 36px; padding: 0;
+    border: 1px solid var(--card-border); border-radius: 8px;
+    background: var(--card); cursor: pointer;
+}
+.sidebar-toggle .sidebar-toggle-button {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    width: 100%; height: 100%;
+}
+.sidebar-toggle .sidebar-toggle-button span {
+    display: block; width: 16px; height: 2px; background: var(--text-dim);
+}
+@media (min-width: 769px) {
+    /* 桌面端始终展开侧边栏（docsify 会给 body 加 close，这里忽略它） */
+    body.close .sidebar { transform: none; }
+    body.close .content { margin-left: var(--sidebar-width); }
+}
+
+/* ===== 侧边栏内容 ===== */
+.sidebar-nav { padding: 14px 18px 0; }
+.sidebar-nav > p { margin: 12px 0 4px; color: var(--text-dim); font-size: 13px; }
+.sidebar-nav ul { list-style: none; margin: 0; padding: 0; }
+.sidebar-nav ul li { margin: 1px 0; }
+.sidebar-nav ul li a {
+    display: block;
+    padding: 5px 10px;
+    color: var(--text-dim); font-size: 14px; text-decoration: none;
+    border-radius: 6px;
+    transition: color .15s, background .15s;
+    word-break: break-word;
+}
+.sidebar-nav ul li a:hover { color: var(--text); background: var(--table-alt); }
+.sidebar-nav ul li.active > a,
+.sidebar-nav ul li a.active {
+    color: var(--accent); font-weight: 600; background: var(--table-alt);
+}
+/* 页内目录（当前页的 h2 子项） */
+.sidebar-nav ul li ul { padding-left: 14px; margin: 2px 0 6px; }
+.sidebar-nav ul li ul li a { font-size: 13px; padding: 3px 10px; }
+.sidebar-nav hr { border: none; border-top: 1px solid var(--card-border); margin: 12px 0; }
+.sidebar-nav img { display: none; } /* 分区标题里的 emoji 图标不需要 */
+
+/* 搜索框：位于顶部导航，结果为下拉面板 */
+.site-nav .search { position: relative; display: flex; align-items: center; }
+.site-nav .search input {
+    width: 170px; padding: 6px 12px;
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 8px;
+    color: var(--text); font-size: 13.5px; font-family: inherit; outline: none;
+    transition: border-color .2s, width .2s;
+    -webkit-appearance: none; appearance: none;
+}
+.site-nav .search input:focus { border-color: var(--accent); width: 240px; }
+.site-nav .search input::placeholder { color: var(--text-dim); }
+.site-nav .search .results-panel {
+    position: absolute; top: calc(100% + 10px); right: 0; z-index: 400;
+    width: min(360px, 88vw); max-height: 65vh; overflow-y: auto;
+    margin: 0; padding: 6px 16px;
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(15,20,40,.18);
+    color: var(--text-dim); font-size: 13px;
+}
+.site-nav .search .results-panel:empty { display: none; }
+.search .matching-post { border-bottom: 1px solid var(--card-border); padding: 8px 0; }
+.search .matching-post:last-child { border-bottom: none; }
+.search .matching-post a { color: var(--text); text-decoration: none; font-weight: 600; font-size: 14px; }
+.search .matching-post a:hover { color: var(--accent); }
+.search .matching-post p { margin: 4px 0 0; color: var(--text-dim); font-size: 12.5px; line-height: 1.5; }
+.search .matching-post h2 { margin: 0; font-size: 14px; }
+.search .search-keyword { color: var(--accent); font-style: normal; font-weight: 700; }
+
+/* ===== 正文排版 ===== */
+.markdown-section {
+    max-width: 900px; margin: 0 auto; padding: 0 36px 80px;
+}
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4 {
+    color: var(--text); font-weight: 700; line-height: 1.35;
+    scroll-margin-top: calc(var(--nav-height) + 16px);
+}
+.markdown-section h1 { font-size: 28px; margin: 8px 0 18px; }
+.markdown-section h2 {
+    font-size: 22px; margin: 40px 0 14px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--card-border);
+}
+.markdown-section h3 { font-size: 17px; margin: 28px 0 10px; }
+.markdown-section h4 { font-size: 15px; margin: 22px 0 8px; }
+/* 标题锚点：docsify 会把整个标题文本包进 a.anchor，必须按普通文本着色（不能隐藏） */
+.markdown-section h1 .anchor,
+.markdown-section h2 .anchor,
+.markdown-section h3 .anchor,
+.markdown-section h4 .anchor {
+    color: inherit; text-decoration: none;
+}
+.markdown-section h1 .anchor:hover,
+.markdown-section h2 .anchor:hover,
+.markdown-section h3 .anchor:hover,
+.markdown-section h4 .anchor:hover { text-decoration: none; }
+
+.markdown-section p { margin: 12px 0; color: var(--text); font-size: 15px; }
+.markdown-section ul,
+.markdown-section ol { margin: 12px 0; padding-left: 26px; color: var(--text); }
+.markdown-section li { margin: 4px 0; font-size: 15px; }
+.markdown-section li > ul,
+.markdown-section li > ol { margin: 4px 0; }
+.markdown-section li::marker { color: var(--text-dim); }
+.markdown-section strong, .markdown-section b { color: var(--text); font-weight: 700; }
+.markdown-section em { color: var(--text); }
+.markdown-section del { color: var(--text-dim); }
+.markdown-section a { color: var(--accent); text-decoration: none; }
+.markdown-section a:visited { color: var(--accent); }
+.markdown-section a:hover { text-decoration: underline; }
+.markdown-section hr { border: none; border-top: 1px solid var(--card-border); margin: 32px 0; }
+.markdown-section img {
+    max-width: 100%; border-radius: 10px; border: 1px solid var(--card-border);
+    background: var(--card);
+}
+
+/* 引用块（注意/提示） */
+.markdown-section blockquote {
+    margin: 18px 0; padding: 12px 18px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+}
+.markdown-section blockquote p { color: var(--text-dim); margin: 4px 0; }
+.markdown-section blockquote strong { color: var(--text); }
+.markdown-section blockquote a { color: var(--accent); }
+.markdown-section blockquote ul,
+.markdown-section blockquote ol { color: var(--text-dim); }
+
+/* docsify 提示语法 !> / ?> */
+.markdown-section p.tip,
+.markdown-section p.warn {
+    margin: 18px 0; padding: 12px 18px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 0 8px 8px 0;
+    color: var(--text-dim);
+}
+.markdown-section p.tip { border-left: 3px solid var(--accent-2); }
+.markdown-section p.warn { border-left: 3px solid #e8a13c; }
+.markdown-section p.tip strong,
+.markdown-section p.warn strong { color: var(--text); }
+
+/* 表格 */
+.markdown-section table {
+    border-collapse: collapse; width: 100%; margin: 16px 0;
+    font-size: 14px; display: block; overflow-x: auto;
+}
+.markdown-section thead th {
+    background: var(--card); color: var(--text); font-weight: 600;
+    border: 1px solid var(--card-border); padding: 8px 14px; text-align: left;
+    white-space: nowrap;
+}
+.markdown-section tbody td {
+    border: 1px solid var(--card-border); padding: 8px 14px;
+    color: var(--text); background: transparent;
+}
+.markdown-section tbody tr:nth-child(even) td { background: var(--table-alt); }
+
+/* 代码 */
+.markdown-section code {
+    font-family: Consolas, "Cascadia Mono", Monaco, monospace;
+    background: var(--code-bg); color: var(--accent);
+    border-radius: 5px; padding: 2px 6px; font-size: 13px;
+    word-break: break-word;
+}
+.markdown-section pre {
+    position: relative;
+    margin: 16px 0; padding: 16px 18px;
+    background: var(--code-bg); border: 1px solid var(--card-border);
+    border-radius: 10px;
+    font-size: 13.5px; line-height: 1.6;
+    overflow-x: auto;
+}
+.markdown-section pre code {
+    display: block; background: transparent; color: var(--text);
+    padding: 0; border-radius: 0; word-break: normal; white-space: pre;
+}
+/* 复制按钮（docsify-copy-code 插件） */
+.docsify-copy-code-button {
+    position: absolute; top: 8px; right: 8px; z-index: 1;
+    padding: 4px 10px; border: 1px solid var(--card-border); border-radius: 6px;
+    background: var(--card); color: var(--text-dim);
+    font-size: 12px; cursor: pointer; font-family: inherit;
+    opacity: 0; transition: opacity .15s;
+}
+.markdown-section pre:hover .docsify-copy-code-button { opacity: 1; }
+.docsify-copy-code-button.success, .docsify-copy-code-button.error { opacity: 1; }
+
+/* 键盘按键 */
+.markdown-section kbd {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-bottom-width: 2px; border-radius: 5px;
+    padding: 1px 6px; font-size: 12.5px;
+    font-family: Consolas, "Cascadia Mono", Monaco, monospace;
+}
+
+/* 任务列表 */
+.markdown-section .task-list-item { list-style: none; margin-left: -22px; }
+.markdown-section .task-list-item-checkbox { margin-right: 6px; }
+
+/* ===== 移动端 ===== */
+@media (max-width: 768px) {
+    body { overflow-x: hidden; }
+    .site-nav { padding: 0 14px; gap: 8px; }
+    .site-nav .brand { font-size: 15px; gap: 8px; }
+    .site-nav .brand img { width: 28px; height: 28px; }
+    .site-nav .links { gap: 10px; }
+    .site-nav .links > a:not(.gh-btn) { display: none; }
+    .site-nav .gh-btn { display: none; } /* 小屏导航放不下，GitHub 入口在正文/主站均有 */
+    .sidebar {
+        width: min(300px, 84vw);
+        transform: translateX(-102%); /* 默认收起；docsify 约定移动端 body.close 为展开态 */
+        box-shadow: none;
+        padding-top: 46px; /* 给汉堡按钮留位 */
+    }
+    body.close .sidebar {
+        transform: translateX(0);
+        box-shadow: 6px 0 24px rgba(0,0,0,.18);
+    }
+    .site-nav .search { flex: 1; min-width: 0; }
+    .site-nav .search input, .site-nav .search input:focus { width: 100%; }
+    .content { margin-left: 0 !important; }
+    .sidebar-toggle { display: block; transition: left .25s ease; }
+    body.close .sidebar-toggle { left: calc(min(300px, 84vw) + 10px); }
+    .markdown-section { padding: 0 18px 60px; }
+    .markdown-section h1 { font-size: 24px; }
+    .markdown-section h2 { font-size: 19px; }
+}
+@media (max-width: 480px) {
+    .site-nav .brand span { display: none; } /* 超小屏给搜索框让位 */
+}
+</style>
+</head>
+<body>
+<nav class="site-nav">
+    <a class="brand" href="/">
+        <img src="/nkas.png" alt="NKAS">
+        <span>NIKKEAutoScript</span>
+    </a>
+    <div class="links">
+        <a href="/#features" data-nav="features">功能</a>
+        <a href="/#download" data-nav="download">下载</a>
+        <a href="/#quickstart" data-nav="quickstart">快速上手</a>
+        <a href="/#faq" data-nav="faq">常见问题</a>
+        <a href="/wiki/" data-nav="docs" class="active">文档</a>
+        <button class="theme-toggle" id="theme-toggle" title="切换主题">🌙</button>
+        <div class="lang-switch">
+            <button id="lang-zh" class="active">中文</button>
+            <button id="lang-en">EN</button>
+        </div>
+        <a class="gh-btn" href="https://github.com/megumiss/NIKKEAutoScript" target="_blank" rel="noopener">★ GitHub</a>
+    </div>
+</nav>
+<div id="app">正在加载文档…</div>
+<script>
+/* 路由约定：#/zh-cn/<Page> 与 #/en/<Page>（docsify 对带点号的路由路径处理有缺陷，
+   wiki 源文件的 Page.zh-CN 命名在构建时会改写到 zh-cn/ 目录） */
+var NAV_I18N = {
+    zh: { features: '功能', download: '下载', quickstart: '快速上手', faq: '常见问题', docs: '文档' },
+    en: { features: 'Features', download: 'Download', quickstart: 'Quick Start', faq: 'FAQ', docs: 'Docs' }
+};
+/* 进入时路由归一化：兼容旧链接（#/Page.zh-CN、#/Page），无 hash 时按主站语言（nkas-lang）落地 */
+(function () {
+    var h = location.hash;
+    if (!h || h === '#/') {
+        var saved = null;
+        try { saved = localStorage.getItem('nkas-lang'); } catch (e) {}
+        location.replace(saved === 'en' ? '#/en/Home' : '#/zh-cn/Home');
+        return;
+    }
+    if (h.indexOf('#/zh-cn/') === 0 || h.indexOf('#/en/') === 0) return;
+    var m = h.match(/^#\/([^?]+?)(\.zh-CN)?(\?.*)?$/);
+    if (!m) return;
+    var dir = m[2] ? 'zh-cn' : 'en';
+    location.replace('#/' + dir + '/' + m[1] + (m[3] || ''));
+})();
+function wikiIsZh() {
+    return location.hash.indexOf('#/zh-cn/') === 0;
+}
+function applyNavLang() {
+    var d = wikiIsZh() ? NAV_I18N.zh : NAV_I18N.en;
+    Array.prototype.forEach.call(document.querySelectorAll('.site-nav .links a[data-nav]'), function (a) {
+        a.textContent = d[a.getAttribute('data-nav')];
+    });
+}
+var initialZh = wikiIsZh();
+
+window.$docsify = {
+    name: '',
+    homepage: 'zh-cn/Home.md',
+    loadSidebar: true, // 每个语言目录下各自的 _sidebar.md
+    relativePath: true, // 相对链接（Page.md、../en/Page.md）基于当前路由目录解析
+    subMaxLevel: 2, // 当前页的 h2 作为页内目录显示在侧边栏
+    auto2top: true,
+    executeScript: false,
+    plugins: [
+        /* 搜索框默认渲染在侧边栏内，挪到顶部导航（主题切换按钮前） */
+        function (hook) {
+            function moveSearch() {
+                var box = document.querySelector('.sidebar .search');
+                var toggle = document.getElementById('theme-toggle');
+                if (box && toggle) toggle.parentNode.insertBefore(box, toggle);
+            }
+            hook.ready(function () {
+                moveSearch();
+                setTimeout(moveSearch, 300);
+            });
+            hook.doneEach(moveSearch);
+        }
+    ],
+    search: {
+        paths: 'auto',
+        placeholder: initialZh ? '搜索文档…' : 'Search documentation…',
+        noData: initialZh ? '没有找到相关内容' : 'No results',
+        depth: 4
+    }
+};
+
+/* 主题切换：与主站共享 localStorage('nkas-theme') */
+(function () {
+    var btn = document.getElementById('theme-toggle');
+    function syncIcon() {
+        btn.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
+    }
+    btn.addEventListener('click', function () {
+        var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('nkas-theme', next); } catch (e) {}
+        syncIcon();
+    });
+    syncIcon();
+})();
+
+/* 语言切换：同一页面的 zh-cn/en 路由互换；
+   同时写回 localStorage('nkas-lang')，返回主站时语言保持一致 */
+(function () {
+    var zhBtn = document.getElementById('lang-zh');
+    var enBtn = document.getElementById('lang-en');
+    function syncLang() {
+        var zh = wikiIsZh();
+        zhBtn.classList.toggle('active', zh);
+        enBtn.classList.toggle('active', !zh);
+        applyNavLang();
+        document.documentElement.lang = zh ? 'zh-CN' : 'en';
+    }
+    function goto(zh) {
+        var page = location.hash.replace(/^#\/(zh-cn|en)\//, '').replace(/\.md$/, '') || 'Home';
+        try { localStorage.setItem('nkas-lang', zh ? 'zh-CN' : 'en'); } catch (e) {}
+        location.hash = '#/' + (zh ? 'zh-cn' : 'en') + '/' + page;
+    }
+    zhBtn.addEventListener('click', function () { goto(true); });
+    enBtn.addEventListener('click', function () { goto(false); });
+    window.addEventListener('hashchange', syncLang);
+    syncLang();
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify-copy-code@2/dist/docsify-copy-code.min.js"></script>
+</body>
+</html>

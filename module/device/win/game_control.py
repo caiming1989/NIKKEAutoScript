@@ -56,6 +56,17 @@ class WinClient:
             return False
 
         folder = path.rpartition('\\')[0]
+        # 优先带 CREATE_BREAKAWAY_FROM_JOB 拉起：脱离桌面壳的 Job Object（需桌面壳允许
+        # breakaway），避免脚本退出时游戏被连带终止；直接拉起可继承管理员权限，不弹 UAC
+        creationflags = subprocess.CREATE_BREAKAWAY_FROM_JOB | subprocess.CREATE_NEW_PROCESS_GROUP
+        try:
+            subprocess.Popen(path, cwd=folder, creationflags=creationflags)
+            logger.info('Program started successfully')
+            return True
+        except OSError as e:
+            logger.warning(f'Failed to start program with breakaway: {e}')
+
+        # 回退到原始启动方式（旧版桌面壳下脚本退出时游戏可能被连带终止）
         if not os.system(f'cmd /C start "" /D "{folder}" "{path}"'):
             logger.info('Program started successfully')
             return True

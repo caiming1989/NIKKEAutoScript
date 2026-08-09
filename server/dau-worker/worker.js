@@ -10,15 +10,14 @@
  *   GET  /trend?days=30&token=<STATS_TOKEN>
  *                 返回最近 days 天（含今天）的每日 DAU 列表。
  *   GET  /        展示页面（HTML），输入口令后查看趋势与各维度占比。
+ *
+ * 存储：D1（reports 表，见 schema.sql），保留最近 92 天数据。
  */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TZ_OFFSET_MS = 8 * 60 * 60 * 1000; // UTC+8
-// 去重 key 保留 8 天，统计计数 key 保留 92 天
-const DEDUP_TTL_SECONDS = 8 * 24 * 3600;
-const COUNT_TTL_SECONDS = 92 * 24 * 3600;
-// 维度 key 前缀：v=版本 os=系统 res=分辨率 geo=地区
-const DIMS = ['v', 'os', 'res', 'geo'];
+// 数据保留 92 天
+const RETENTION_DAYS = 92;
 const OS_LABELS = ['Windows 10', 'Windows 11', 'Linux', 'macOS'];
 
 function today() {
@@ -69,17 +68,6 @@ function dateOffset(day, offsetDays) {
   return new Date(t).toISOString().slice(0, 10);
 }
 
-async function getDist(env, dim, date) {
-  const prefix = `${dim}:${date}:`;
-  const list = await env.STATS.list({ prefix });
-  const values = await Promise.all(list.keys.map((k) => env.STATS.get(k.name)));
-  const dist = {};
-  list.keys.forEach((k, i) => {
-    dist[k.name.slice(prefix.length)] = parseInt(values[i] || '0', 10);
-  });
-  return dist;
-}
-
 const INDEX_HTML = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -101,6 +89,11 @@ const INDEX_HTML = `<!DOCTYPE html>
   input { padding: 6px 8px; width: 16em; }
   button { padding: 6px 12px; cursor: pointer; }
   .err { color: #c00; }
+  .trend-chart { width: 100%; height: auto; display: block; }
+  .trend-chart .col { fill: #4a90d9; }
+  .trend-chart .col:hover { fill: #357abd; }
+  .trend-chart .axis { stroke: #ccc; stroke-width: 1; }
+  .trend-chart text { font-size: 10px; fill: #666; }
 </style>
 </head>
 <body>
@@ -138,14 +131,35 @@ async function api(path) {
   return r.json();
 }
 
-function bars(el, rows, unit) {
-  if (!rows.length) { el.innerHTML = '暂无数据'; return; }
-  const total = rows.reduce((s, r) => s + r[1], 0);
-  const max = Math.max(...rows.map(r => r[1]), 1);
-  el.innerHTML = rows.map(([k, n]) =>
-    '<div class="bar-row"><span class="label">' + k + '</span>' +
-    '<div class="bar" style="width:' + Math.round(n / max * 280) + 'px"></div>' +
-    '<span class="num">' + n + unit + '</span></div>').join('');
+function trendChart(days) {
+  const W = 720, H = 220, padL = 36, padR = 8, padT = 12, padB = 24;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+  const max = Math.max(...days.map(d => d.dau), 1);
+  // y 轴刻度取整到好看的步长
+  const step = Math.max(1, Math.ceil(max / 4));
+  const yMax = step * 4;
+  const bw = innerW / days.length;
+  let s = '<svg class="trend-chart" viewBox="0 0 ' + W + ' ' + H + '">';
+  // 横向网格线与 y 轴刻度
+  for (let v = 0; v <= yMax; v += step) {
+    const y = padT + innerH - v / yMax * innerH;
+    s += '<line class="axis" x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '"/>' +
+      '<text x="' + (padL - 4) + '" y="' + (y + 3) + '" text-anchor="end">' + v + '</text>';
+  }
+  days.forEach((d, i) => {
+    const h = d.dau / yMax * innerH;
+    const x = padL + i * bw + bw * 0.15;
+    const y = padT + innerH - h;
+    s += '<rect class="col" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) +
+      '" width="' + (bw * 0.7).toFixed(1) + '" height="' + Math.max(h, 0).toFixed(1) + '">' +
+      '<title>' + d.date + '：' + d.dau + '</title></rect>';
+    // x 轴日期标签隔 5 天显示一个
+    if (i % 5 === 0 || i === days.length - 1) {
+      s += '<text x="' + (padL + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 8) +
+        '" text-anchor="middle">' + d.date.slice(5) + '</text>';
+    }
+  });
+  return s + '</svg>';
 }
 
 async function load() {
@@ -154,8 +168,8 @@ async function load() {
     document.getElementById('auth').style.display = 'none';
     document.getElementById('content').style.display = '';
     document.getElementById('dau').textContent = stats.dau;
-    const tr = trend.days.map(d => [d.date, d.dau]);
-    bars(document.getElementById('trend'), tr, '');
+    const trendEl = document.getElementById('trend');
+    trendEl.innerHTML = trend.days.length ? trendChart(trend.days) : '暂无数据';
     const dims = { v: stats.versions, os: stats.os, res: stats.res, geo: stats.geo };
     for (const [dim, dist] of Object.entries(dims)) {
       const rows = Object.entries(dist || {}).sort((a, b) => b[1] - a[1]);
@@ -177,7 +191,7 @@ async function load() {
 </html>`;
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     // 通过路由挂在子路径下时（如 nkas.megumiss.top/status/*），
@@ -210,13 +224,6 @@ export default {
         return json({ error: 'invalid id' }, 400);
       }
 
-      const day = today();
-      const dedupKey = `d:${day}:${body.id}`;
-      const seen = await env.STATS.get(dedupKey);
-      if (seen !== null) {
-        return json({ ok: true, dedup: true });
-      }
-
       // 各维度取值：客户端字段缺失计 unknown，校验不过计 other；地区来自 CF 边缘节点
       const dims = {
         v: sanitizeVersion(body.version),
@@ -224,16 +231,22 @@ export default {
         res: sanitizeRes(body.res),
         geo: sanitizeCountry(request.cf && request.cf.country),
       };
-      const countKeys = [`c:${day}`, ...DIMS.map((d) => `${d}:${day}:${dims[d]}`)];
-      const counts = await Promise.all(countKeys.map((k) => env.STATS.get(k)));
-      await Promise.all([
-        env.STATS.put(dedupKey, '1', { expirationTtl: DEDUP_TTL_SECONDS }),
-        ...countKeys.map((k, i) =>
-          env.STATS.put(k, String(parseInt(counts[i] || '0', 10) + 1), {
-            expirationTtl: COUNT_TTL_SECONDS,
-          }),
-        ),
-      ]);
+      const day = today();
+      // 主键 (day, id) 去重：已存在则 INSERT OR IGNORE 不生效，changes 为 0
+      const r = await env.STATS.prepare(
+        'INSERT OR IGNORE INTO reports (day, id, v, os, res, geo) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+        .bind(day, body.id, dims.v, dims.os, dims.res, dims.geo)
+        .run();
+      // 顺带清理过期数据，不阻塞响应
+      ctx.waitUntil(
+        env.STATS.prepare('DELETE FROM reports WHERE day < ?')
+          .bind(dateOffset(day, RETENTION_DAYS))
+          .run(),
+      );
+      if (!r.meta.changes) {
+        return json({ ok: true, dedup: true });
+      }
       return json({ ok: true });
     }
 
@@ -245,10 +258,21 @@ export default {
       if (!isValidDate(date)) {
         return json({ error: 'invalid date, expect YYYY-MM-DD' }, 400);
       }
-      const dau = parseInt((await env.STATS.get(`c:${date}`)) || '0', 10);
-      const [versions, os, res, geo] = await Promise.all(
-        DIMS.map((d) => getDist(env, d, date)),
-      );
+      const [dauStmt, dimStmt] = await env.STATS.batch([
+        env.STATS.prepare('SELECT COUNT(*) AS c FROM reports WHERE day = ?').bind(date),
+        env.STATS.prepare(
+          `SELECT 'v' AS dim, v AS k, COUNT(*) AS n FROM reports WHERE day = ? GROUP BY v
+           UNION ALL SELECT 'os', os, COUNT(*) FROM reports WHERE day = ? GROUP BY os
+           UNION ALL SELECT 'res', res, COUNT(*) FROM reports WHERE day = ? GROUP BY res
+           UNION ALL SELECT 'geo', geo, COUNT(*) FROM reports WHERE day = ? GROUP BY geo`,
+        ).bind(date, date, date, date),
+      ]);
+      const dau = dauStmt.results[0].c;
+      const versions = {}, os = {}, res = {}, geo = {};
+      const dists = { v: versions, os, res, geo };
+      for (const row of dimStmt.results) {
+        dists[row.dim][row.k] = row.n;
+      }
       return json({ date, dau, versions, os, res, geo });
     }
 
@@ -265,9 +289,14 @@ export default {
       for (let i = days - 1; i >= 0; i--) {
         keys.push(dateOffset(day, i));
       }
-      const counts = await Promise.all(keys.map((d) => env.STATS.get(`c:${d}`)));
+      const { results } = await env.STATS.prepare(
+        'SELECT day, COUNT(*) AS dau FROM reports WHERE day >= ? GROUP BY day',
+      )
+        .bind(keys[0])
+        .all();
+      const byDay = Object.fromEntries(results.map((r) => [r.day, r.dau]));
       return json({
-        days: keys.map((d, i) => ({ date: d, dau: parseInt(counts[i] || '0', 10) })),
+        days: keys.map((d) => ({ date: d, dau: byDay[d] || 0 })),
       });
     }
 
