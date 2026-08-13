@@ -6,6 +6,7 @@ import { JsonSocket } from './api/ws'
 import AppSelect from './components/AppSelect.vue'
 import EventCalendar from './components/EventCalendar.vue'
 import MaintenanceBanner from './components/MaintenanceBanner.vue'
+import ScreenPreview from './components/ScreenPreview.vue'
 import FieldItemTable from './components/config/FieldItemTable.vue'
 import FieldPathPicker from './components/config/FieldPathPicker.vue'
 import FieldPriority from './components/config/FieldPriority.vue'
@@ -610,6 +611,12 @@ async function queryLogs() {
   } catch (exception: any) { error.value = exception.message } finally { if (seq === logsQuerySeq) logsLoading.value = false }
 }
 async function refreshLogs() { await loadLogFiles(); await queryLogs() }
+// Raw download of the selected file with no level/keyword filtering.  The
+// merged 全部 view has no single backing file, so the export button is
+// hidden while it is selected.
+const logsExportUrl = computed(() => logsDate.value && logsSource.value
+  ? `/api/system/logs/download?date=${encodeURIComponent(logsDate.value)}&source=${encodeURIComponent(logsSource.value)}`
+  : '')
 let logsKeywordTimer = 0
 watch([logsDate, logsSource, logsLevel], queryLogs)
 watch(logsKeyword, () => { window.clearTimeout(logsKeywordTimer); logsKeywordTimer = window.setTimeout(queryLogs, 400) })
@@ -1168,12 +1175,15 @@ onBeforeUnmount(() => {
               </div>
             </article>
           </div>
-          <article class="card log-card">
-            <div class="log-head"><b>{{ t('实时日志') }}</b><span class="log-autoscroll"><AppSelect class="log-level-select" v-model="logLevel" :options="logLevelOptions"/><label class="switch sm"><input v-model="autoScroll" type="checkbox"><span class="slider"></span></label>{{ t('自动滚动') }}</span></div>
-            <div ref="logBody" class="log-body">
-              <div v-for="line in visibleLogs" :key="line.id" class="log-frag" v-html="line.html"></div>
-            </div>
-          </article>
+          <div class="ov-right">
+            <article class="card log-card">
+              <div class="log-head"><b>{{ t('实时日志') }}</b><span class="log-autoscroll"><AppSelect class="log-level-select" v-model="logLevel" :options="logLevelOptions"/><label class="switch sm"><input v-model="autoScroll" type="checkbox"><span class="slider"></span></label>{{ t('自动滚动') }}</span></div>
+              <div ref="logBody" class="log-body">
+                <div v-for="line in visibleLogs" :key="line.id" class="log-frag" v-html="line.html"></div>
+              </div>
+            </article>
+            <ScreenPreview :name="selectedName" :language="systemStatus.language" />
+          </div>
         </div>
       </section>
       <section v-else-if="isWorkspace" class="view" :class="{ 'tool-view': selectedPage === 'tool' }" @scroll.passive="onViewScroll">
@@ -1322,6 +1332,7 @@ onBeforeUnmount(() => {
           <div class="task-icon">📄</div>
           <div style="flex:1"><h2>{{ t('日志') }}</h2><div class="sub">{{ t('查看 log 目录下的日志文件，支持按类型、级别、日期和关键字筛选。') }}</div></div>
           <button class="btn" @click="refreshLogs">↻ {{ t('刷新') }}</button>
+          <a v-if="logsExportUrl" class="btn" :href="logsExportUrl" :download="`${logsDate}_${logsSource}.txt`">⬇ {{ t('导出') }}</a>
         </article>
         <article class="card log-card logs-card">
           <div class="log-head logs-filter">
