@@ -173,6 +173,20 @@
         "mode": "path"
       }
     },
+    "Scrcpy": {
+      "WebUrl": {
+        "type": "input",
+        "value": ""
+      },
+      "Bitrate": {
+        "type": "input",
+        "value": 16000000
+      },
+      "MaxFps": {
+        "type": "input",
+        "value": 60
+      }
+    },
     "Storage": {
       "Storage": {
         "type": "storage",
@@ -2135,8 +2149,8 @@
         "type": "select",
         "value": "",
         "option": [
-          "event_20260723",
-          "event_20260702"
+          "event_20260813",
+          "event_20260723"
         ],
         "display": "disabled"
       },
@@ -2270,8 +2284,8 @@
         "type": "select",
         "value": "",
         "option": [
-          "event_20260723",
-          "event_20260702"
+          "event_20260813",
+          "event_20260723"
         ],
         "display": "disabled"
       },

@@ -29,6 +29,11 @@ class GeneratedConfig:
     Emulator_AdbRestart = False
     Emulator_ScreenshotInterval = 0.5
 
+    # Group `Scrcpy`
+    Scrcpy_WebUrl = None
+    Scrcpy_Bitrate = 16000000
+    Scrcpy_MaxFps = 60
+
     # Group `EmulatorInfo`
     EmulatorInfo_Emulator = 'auto'  # auto, NoxPlayer, NoxPlayer64, BlueStacks4, BlueStacks5, BlueStacks4HyperV, BlueStacks5HyperV, LDPlayer3, LDPlayer4, LDPlayer9, MuMuPlayer, MuMuPlayerX, MuMuPlayer12, MEmuPlayer
     EmulatorInfo_name = None
@@ -156,7 +161,7 @@ class GeneratedConfig:
     BlaExchange_Priority = 'Gem_×320 > Gem_×120 > Gem_×60 > Gem_×30 > Welcome_Gift_Core_Dust_×30'  # Gem_×320, Welcome_Gift_Core_Dust_×30, Gem_×30, Skill_Manual_I_×5, Ultra_Boost_Module_×5, Code_Manual_Selection_Box_×5, Gem_×60, Mid-Quality_Mold_×3, Credit_Case_(1H)_x9, Core_Dust_Case_(1H)_×3, Gem_×120, Mid-Quality_Mold_×8, Battle_Data_Set_Case_(1H)_×6, Core_Dust_Case_(1H)_×6, Skill_Manual_I_×30, Ultra_Boost_Module_×30, Code_Manual_Selection_Box_×30
 
     # Group `EventInfo`
-    EventInfo_Event = ''  # event_20260723, event_20260702
+    EventInfo_Event = ''  # event_20260813, event_20260723
     EventInfo_StoryPart = 'Story_1'  # Story_1, Story_2
     EventInfo_StoryDifficulty = 'Normal'  # Normal, Hard
 

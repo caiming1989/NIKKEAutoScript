@@ -490,10 +490,12 @@ class EventStory(EventBase):
                 if self.appear_with_flip(button, offset=30, threshold=0.9, color_threshold=20, static=False):
                     has_pending_stage = True
                     break
-        # 如果最后一关没有clear
+        # 如果最后一关没有clear（与推图循环内的推完判定保持一致：两个模板同时出现才算已通关）
         if (
-            not self.appear(self.STORY_STAGE_12(open_story), offset=80, threshold=0.9)
-            and not self.appear(self.STORY_STAGE_12(f'{open_story}_clear'), offset=80, threshold=0.9)
+            not (
+                self.appear(self.STORY_STAGE_12(open_story), offset=80, threshold=0.9)
+                and self.appear(self.STORY_STAGE_12(f'{open_story}_clear'), offset=80, threshold=0.9)
+            )
             and has_pending_stage
         ):
             if grid_mode:
@@ -511,6 +513,7 @@ class EventStory(EventBase):
                         grid_retry_timer.reached()
                         and self.appear(self.STORY_PART_CHECK(open_story), threshold=10)
                         and self.appear(self.STORY_PART_CHECK(open_story), offset=30)
+                        and not self.appear(self.event_assets.STORY_STAGE_CHECK, offset=30)
                     ):
                         result = self.find_pending_stage_by_grid(open_story)
                         if result == 'found':
@@ -578,7 +581,7 @@ class EventStory(EventBase):
                 if self.appear_then_click(ANSWER_CHECK, offset=100, interval=3):
                     continue
                 # 跳过剧情
-                if self.appear_then_click(SKIP, offset=(150, 10), interval=1):
+                if self.appear_then_click(self.event_assets.SKIP, offset=(150, 10), interval=1):
                     continue
                 # 剧情推完提示
                 if self.appear_then_click(STAGE_COMPLETE_CONFIRM, offset=10, interval=1):
