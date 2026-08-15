@@ -449,7 +449,7 @@
     },
     "LauncherPath": {
       "name": "Launcher Path",
-      "help": "Game launcher path. Required. Example: E:\\NIKKE\\Launcher\\nikke_launcher.exe"
+      "help": "Game launcher path. Required. Located in the Launcher directory under the game installation path. Example: E:\\NIKKE\\Launcher\\nikke_launcher.exe"
     },
     "LauncherTitleName": {
       "name": "Launcher Title",
@@ -461,7 +461,7 @@
     },
     "GamePath": {
       "name": "Game Path",
-      "help": "Game path; usually auto-filled based on launcher path. Manually change if auto-filled path is incorrect"
+      "help": "Game path; located in the NIKKE\\game directory under the game installation path. Usually auto-filled based on launcher path. Manually change if auto-filled path is incorrect"
     },
     "GameTitleName": {
       "name": "Game Title",
@@ -862,6 +862,14 @@
     "XCommonParams": {
       "name": "XCommonParams",
       "help": "The x-common-params parameter in the request header must include the openid. It must be filled in manually; under normal circumstances, no updates are required."
+    },
+    "AutoRenew": {
+      "name": "Auto Renew (BETA)",
+      "help": "Automatically renews the cookie shortly before it expires (requires the LiPass account set in NKAS Settings - Account Settings). An expired cookie cannot be renewed, so keep tasks running regularly. Depends on playwright and a browser; the first renewal automatically installs playwright, and Docker users will also download chromium."
+    },
+    "TokenExpire": {
+      "name": "Token Expire Time",
+      "help": ""
     }
   },
   "BlaDaily": {

@@ -449,7 +449,7 @@
     },
     "LauncherPath": {
       "name": "ランチャーパス",
-      "help": "ゲームランチャーのパス。必須入力。例：E:\\NIKKE\\Launcher\\nikke_launcher.exe"
+      "help": "ゲームランチャーのパス。必須入力。ゲームインストール先の Launcher ディレクトリ内にあります。例：E:\\NIKKE\\Launcher\\nikke_launcher.exe"
     },
     "LauncherTitleName": {
       "name": "ランチャータイトル",
@@ -461,7 +461,7 @@
     },
     "GamePath": {
       "name": "ゲームパス",
-      "help": "ゲームのパス。通常は手動で入力する必要はありません。ランチャーパスに基づいて自動的に入力されます。自動的に入力されたパスが間違っている場合は、手動で変更してください"
+      "help": "ゲームのパス。ゲームインストール先の NIKKE\\game ディレクトリ内にあります。通常は手動で入力する必要はありません。ランチャーパスに基づいて自動的に入力されます。自動的に入力されたパスが間違っている場合は、手動で変更してください"
     },
     "GameTitleName": {
       "name": "ゲームタイトル",
@@ -862,6 +862,14 @@
     "XCommonParams": {
       "name": "XCommonParams",
       "help": "リクエストヘッダー内の x-common-params パラメータには、openid を含める必要があります。手動で入力する必要がありますが、通常、更新する必要はありません。"
+    },
+    "AutoRenew": {
+      "name": "自動更新（BETA）",
+      "help": "Cookieの有効期限が近づくと自動で更新します（NKAS設定-アカウント設定でLiPassアカウントの入力が必要です）。期限切れになったCookieは更新できないため、タスクを定期的に実行してください。playwrightとブラウザに依存します。初回更新時にplaywrightが自動インストールされ、Dockerユーザーはchromiumもダウンロードされます"
+    },
+    "TokenExpire": {
+      "name": "Token有効期限",
+      "help": ""
     }
   },
   "BlaDaily": {
