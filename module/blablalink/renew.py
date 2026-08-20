@@ -1,3 +1,27 @@
+"""
+blablalink Cookie 自动续期
+
+运行机制：
+1. Cookie 里的 game_token 有效期约 30 天。临期或失效时，不必重新输账号密码登录：
+   lipass（Level Infinite Pass）支持用仍在有效期内的 game_openid/game_token
+   直接换新 token，有效期重新计算 30 天，理论可无限滚动续期。
+2. 换 token 必须走官方 Web SDK（接口有 sig 签名，VM 混淆，无法纯 HTTP 重放）：
+   用无头浏览器打开 blablalink 主页，注入 Pass SDK（index.umd.js），在页面内执行两步：
+   refreshCAccTokenByOpenID（game_token 换 lipass token）
+   → intlSignIn（lipass token 换新 game_token）。
+3. Pass SDK 初始化需要的 env/appID 不写死：点开主页的 Sign In 触发站点登录 SDK
+   初始化，从 console 的 login_pop_config 抓站点运行时配置；港澳台账号（按实例
+   客户端设置：PC 端 PCClientInfo.Client / 模拟器 Emulator.PackageName）先在
+   登录弹窗的区域下拉框点选 HK/MC/TW，配置随切换重新打印。
+   gameID 优先取现有 cookie 的 game_gameid，其次 login_pop_config，
+   最后 XCommonParams 的 intl_game_id；channelID 取 cookie 的 game_channelid。
+   都取不到直接报错。
+4. 浏览器按 系统 Chrome → 系统 Edge → 自动下载内置 Chromium 的回退链启动；
+   playwright 缺失时自动 pip 安装（尊重 deploy.yaml 的 PypiMirror）。
+5. 返回码约定：refresh 阶段 ret=11002 表示 token 已彻底失效，只能重新登录
+   （走 login.py 的一键登录）；signin 阶段 ret=808099001 表示缺 account 字段，
+   调用方需传入 LiPass 账号邮箱。
+"""
 import json
 import subprocess
 import sys
@@ -5,16 +29,71 @@ from typing import Optional, Tuple
 
 from module.logger import logger
 
-# Level Infinite Pass（lipass）Web SDK 常量，来自 blablalink 登录链路实测
+# Level Infinite Pass（lipass）Web SDK 地址与站点入口
 LIPASS_SDK_URL = 'https://common-web.intlgame.com/sdk-cdn/infinite-pass/latest/index.umd.js'
-LIPASS_ENV = 'aws-na'
-LIPASS_APP_ID = '09af79d65d6e4fdf2d2569f0d365739d'
 BLA_HOME = 'https://www.blablalink.com/'
-GAME_ID = '29080'
-CHANNEL_ID = 131
+# 主页登录入口按钮（触发登录 SDK 初始化，从而暴露 login_pop_config）
+SEL_SIGN_IN = 'button:has-text("Sign In")'
+# OneTrust cookie 提示的接受按钮，不点掉会挡住 Sign In
+SEL_COOKIE_ACCEPT = '#onetrust-accept-btn-handler'
+
+# 超时统一约定（大陆访问海外站点偏慢，网络等待给足余量；单位毫秒/秒见注释）
+GOTO_TIMEOUT = 60000       # page.goto 导航（ms）
+ELEMENT_TIMEOUT = 60000    # 按钮/输入框/选项等元素出现与点击（ms）
+SDK_LOAD_TIMEOUT = 30000   # Pass SDK CDN 加载（ms）
+WAIT_SHORT = 10000          # 弹窗渲染、SDK 重初始化等固定短等待（ms）
 
 # refresh_sacc_token 返回码：token 已过期/失效，只能人工重新登录
 RET_TOKEN_INVALID = 11002
+
+
+def server_from_client(config_data) -> str:
+    """
+    实例的区服设置：PC 端（NKAS.Client.Platform=win）取 PCClient.PCClientInfo.Client，
+    adb 模拟器取 Emulator.Emulator.PackageName 经 to_server 转换。
+    返回 'intl' / 'tw' / 'hmt'（tw 与 hmt 同义，都是港澳台）。
+    """
+    from module.config.server import to_server
+    from module.config.utils import deep_get
+    if deep_get(config_data, 'NKAS.Client.Platform', 'win') == 'win':
+        return deep_get(config_data, 'PCClient.PCClientInfo.Client', '')
+    return to_server(deep_get(config_data, 'Emulator.Emulator.PackageName', ''))
+
+
+def select_login_region(page, server: str) -> bool:
+    """
+    在登录弹窗的区域下拉框中按 NKAS 区服点选区域（港澳台账号必须选对，
+    否则会按站点默认的国际服初始化登录 SDK）。
+    下拉选项与切换后的 env/gameID/appID 全部由站点运行时提供
+    （login_pop_config 随切换重新打印），代码里不存任何区域 ID。
+    当前选中已匹配或无需选择时返回 False；成功切换返回 True。
+    港澳台区服选不上时抛 RenewError（继续按国际服登录会得到错误区域的凭证）。
+    """
+    if not server:
+        return False
+    want_hmt = server in ('tw', 'hmt')
+    # 站点默认区域是国际服，intl 无需任何操作
+    if not want_hmt:
+        return False
+    try:
+        dd = page.query_selector('.login-area-dropdown')
+        if not dd:
+            raise RenewError('Login area dropdown not found, cannot switch region to HK/MC/TW')
+        current = (dd.inner_text() or '').upper()
+        if 'TW' in current:
+            return False
+        dd.query_selector('button').click()
+        page.wait_for_timeout(WAIT_SHORT)
+        # 选项在弹层里，按站点界面文本点选（与 Sign In / Log in 按钮同为 UI 文本匹配）
+        page.click('[data-radix-popper-content-wrapper] >> :text-is("HK/MC/TW")', timeout=ELEMENT_TIMEOUT)
+        logger.info(f'Selected login region HK/MC/TW for server={server}')
+        # 等登录 SDK 按新区域重新初始化（会重新打印 login_pop_config）
+        page.wait_for_timeout(WAIT_SHORT)
+        return True
+    except RenewError:
+        raise
+    except Exception as e:
+        raise RenewError(f'Failed to switch login region to HK/MC/TW: {str(e)[:150]}')
 
 
 class RenewError(Exception):
@@ -160,7 +239,8 @@ async ({ gameOpenid, gameToken, account }) => {
 """
 
 
-def renew_cookie(cookie: str, account: str = '', user_agent: str = '') -> Optional[Tuple[str, int]]:
+def renew_cookie(cookie: str, account: str = '', user_agent: str = '',
+                 game_id: str = '', server: str = '') -> Optional[Tuple[str, int]]:
     """
     用 cookie 中仍在有效期内的 game_openid/game_token 续期，换取新 game_token（新 30 天有效期）。
 
@@ -168,6 +248,9 @@ def renew_cookie(cookie: str, account: str = '', user_agent: str = '') -> Option
         cookie: 现有的 BlaAuth cookie 字符串
         account: LiPass 账号邮箱（intlSignIn 的 channel_info.account，可空）
         user_agent: 浏览器 UA
+        game_id: gameID 备用来源（XCommonParams 的 intl_game_id），
+            优先取 cookie 的 game_gameid 与站点 login_pop_config
+        server: NKAS 区服（intl/tw/hmt），港澳台需要在登录弹窗切换区域
 
     Returns:
         (新 cookie 字符串, 过期时间戳)；续期失败返回 None
@@ -178,14 +261,13 @@ def renew_cookie(cookie: str, account: str = '', user_agent: str = '') -> Option
     if not game_openid or not game_token:
         logger.error('Cookie missing game_openid or game_token, cannot renew')
         return None
+    # channelID 不写死：取现有 cookie 的 game_channelid（一键登录写入的值）
+    channel_id = creds.get('game_channelid', '')
+    if not channel_id:
+        logger.error('channel_id not found in cookie (game_channelid), cannot renew')
+        return None
 
     sync_playwright = ensure_playwright()
-
-    js = (_RENEW_JS
-          .replace('ENV_PLACEHOLDER', LIPASS_ENV)
-          .replace('GAME_ID_PLACEHOLDER', GAME_ID)
-          .replace('APP_ID_PLACEHOLDER', LIPASS_APP_ID)
-          .replace('CHANNEL_ID_PLACEHOLDER', str(CHANNEL_ID)))
 
     with sync_playwright() as p:
         browser = _launch_browser(p)
@@ -195,10 +277,62 @@ def renew_cookie(cookie: str, account: str = '', user_agent: str = '') -> Option
                 context_args['user_agent'] = user_agent
             context = browser.new_context(**context_args)
             page = context.new_page()
-            page.goto(BLA_HOME, wait_until='domcontentloaded')
-            page.wait_for_timeout(3000)
+
+            # env/gameID/appID 不写死：点 Sign In 触发站点登录 SDK 初始化，
+            # 从 console 的 login_pop_config 抓站点运行时配置；切换区域会重新打印，
+            # 逐条收集，取最新一份
+            sdk_confs = []
+
+            def on_console(msg):
+                if msg.text.startswith('[login] login_pop_config'):
+                    try:
+                        sdk_confs.append(json.loads(msg.text.split(' ', 2)[2]))
+                    except Exception:
+                        pass
+
+            page.on('console', on_console)
+            page.goto(BLA_HOME, wait_until='domcontentloaded', timeout=GOTO_TIMEOUT)
+            page.wait_for_timeout(WAIT_SHORT)
+            try:
+                page.click(SEL_COOKIE_ACCEPT, timeout=ELEMENT_TIMEOUT)
+            except Exception:
+                pass
+            try:
+                page.click(SEL_SIGN_IN, timeout=ELEMENT_TIMEOUT)
+            except Exception as e:
+                logger.warning(f'Click Sign In failed: {str(e)[:100]}')
+            page.wait_for_timeout(WAIT_SHORT)
+            # 港澳台账号需在登录弹窗切换区域，SDK 配置随切换重新打印
+            switched = select_login_region(page, server)
+            for _ in range(20):
+                if sdk_confs and (not switched or len(sdk_confs) >= 2):
+                    break
+                page.wait_for_timeout(1000)
+            sdk_conf = sdk_confs[-1] if sdk_confs else {}
+            if switched and len(sdk_confs) < 2:
+                logger.error('login_pop_config not refreshed after region switch, cannot renew')
+                return None
+            env = str(sdk_conf.get('env', ''))
+            app_id = str(sdk_conf.get('appID', ''))
+            # gameID 优先 cookie 的 game_gameid（账号自己的区服），
+            # 其次站点 login_pop_config，最后 XCommonParams 备用
+            game_id_final = creds.get('game_gameid', '') or str(sdk_conf.get('gameID', '')) or game_id
+            if not env or not app_id:
+                logger.error(f'login_pop_config not captured (env={env!r}, appID={app_id!r}), cannot renew')
+                return None
+            if not game_id_final:
+                logger.error('game_id not found in login_pop_config, cookie or XCommonParams, cannot renew')
+                return None
+            logger.info(f'Pass SDK config: env={env}, gameID={game_id_final}, appID={app_id[:8]}..., channel={channel_id}')
+
+            js = (_RENEW_JS
+                  .replace('ENV_PLACEHOLDER', env)
+                  .replace('GAME_ID_PLACEHOLDER', game_id_final)
+                  .replace('APP_ID_PLACEHOLDER', app_id)
+                  .replace('CHANNEL_ID_PLACEHOLDER', channel_id))
+
             page.add_script_tag(url=LIPASS_SDK_URL)
-            page.wait_for_function('window.PassFactory !== undefined', timeout=15000)
+            page.wait_for_function('window.PassFactory !== undefined', timeout=SDK_LOAD_TIMEOUT)
 
             logger.info('Refreshing lipass token...')
             result = page.evaluate(js, {
