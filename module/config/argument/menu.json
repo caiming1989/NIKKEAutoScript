@@ -2,28 +2,29 @@
   "NKAS": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "⚙️",
     "tasks": [
       "NKAS",
       "Emulator",
       "PCClient",
       "Notify",
       "Restart"
-    ],
-    "icon": "⚙️"
+    ]
   },
   "Reward": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "🎁",
     "tasks": [
       "Reward",
       "Destruction",
       "Mailbox"
-    ],
-    "icon": "🎁"
+    ]
   },
   "Daily": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "📅",
     "tasks": [
       "DailyRecruit",
       "Daily",
@@ -32,24 +33,24 @@
       "Shop",
       "RubbishShop",
       "EpisodeViewing"
-    ],
-    "icon": "📅"
+    ]
   },
   "Outpost": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "🏢",
     "tasks": [
       "Commission",
       "Liberation",
       "Synchro",
       "Recycling",
       "OutpostStory"
-    ],
-    "icon": "🏢"
+    ]
   },
   "Ark": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "🏛️",
     "tasks": [
       "SimulationRoom",
       "Overclock",
@@ -59,70 +60,70 @@
       "SpecialArena",
       "SpecialArenaWatch",
       "ChampionArena"
-    ],
-    "icon": "🏛️"
+    ]
   },
   "LimitedTimeEvent": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "⏱️",
     "tasks": [
       "Coop",
       "SoloRaid",
       "UnionRaid"
-    ],
-    "icon": "⏱️"
+    ]
   },
   "StoryEvent": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "📖",
     "tasks": [
       "Event",
       "Event2"
-    ],
-    "icon": "📖"
+    ]
   },
   "Surface": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "🗺️",
     "tasks": [
       "SurfaceDaily"
-    ],
-    "icon": "🗺️"
+    ]
   },
   "Blablalink": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "💬",
     "tasks": [
       "BlaAuth",
       "BlaDaily",
       "BlaCDK",
       "BlaExchange"
-    ],
-    "icon": "💬"
+    ]
   },
   "Gift": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "🎁",
     "tasks": [
       "StepUpGift",
       "DailyGift",
       "WeeklyGift",
       "MonthlyGift"
-    ],
-    "icon": "🎁"
+    ]
   },
   "DataChart": {
     "menu": "collapse",
     "page": "setting",
+    "icon": "📈",
     "tasks": [
       "WarehouseStats",
       "InterceptionTaskStats"
-    ],
-    "icon": "📈"
+    ]
   },
   "Tool": {
     "menu": "collapse",
     "page": "tool",
+    "icon": "🛠️",
     "tasks": [
       "AutoTower",
       "SemiCombat",
@@ -130,7 +131,6 @@
       "BlaCDKManual",
       "ScreenRotate",
       "UpdateHosts"
-    ],
-    "icon": "🛠️"
+    ]
   }
 }

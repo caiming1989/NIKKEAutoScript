@@ -6,7 +6,8 @@
 - `gui.py`：Web UI 启动入口（Uvicorn）
 
 配置与运行时文件在 `config/`；模板图与多语言资源在 `assets/`（如 `assets/zh-CN/event_dated/...`）；日志与错误截图在 `log/`。  
-桌面 Tauri 2 工程位于 `webapp/`；Vue SPA 位于 `webui/`，由 Python 后端托管。
+桌面 Tauri 2 工程位于 `webapp/`；Vue SPA 位于 `webui/`，由 Python 后端托管。  
+SPA 源码结构：`webui/src/views/`（按页面拆分）、`webui/src/stores/`（Pinia 共享状态）、`webui/src/composables/`（Tauri 壳、文本域等复用逻辑）、`webui/src/components/`（壳与通用组件）；`App.vue` 只是布局壳，按路由切换视图。
 
 ## 构建、测试与开发命令
 Python 环境初始化：
@@ -50,6 +51,7 @@ Python 使用 4 空格缩进，单行不超过 120 字符，字符串优先单�
 - 保持向后兼容：新增参数应提供默认值，避免影响既有任务配置与调用链。
 - 资源改动要成对：模板重命名/替换时同步检查 `assets.py` 与实际图片，避免悬空引用。
 - 删除代码要可验证：删除调试或废弃逻辑后，至少执行语法检查与一次最小路径回归。
+- 注释只写 non-obvious 的原因（为什么这么做/不能这么做），不复述代码行为；禁止在注释里保留中间尝试过程的痕迹。
 
 ## 高频代码用法说明
 - Web UI 为 `webui/` 下的 Vue SPA（构建产物 `webui/dist` 提交入库），后端是纯 Starlette 工厂 `module/webui/app.py:app`，通过 `module/webui/api/` 暴露 REST 与 WebSocket；pywebio 已移除。
@@ -73,6 +75,7 @@ Python 使用 4 空格缩进，单行不超过 120 字符，字符串优先单�
 - `ZH: 更新 NIKKE 咨询对话`
 
 PR 建议包含：变更目的、影响模块/资源、验证步骤，以及 UI/OCR 改动对应的截图或日志片段；有相关 Issue 时请关联。
+PR 描述只写最终行为：diff 里看不出来的取舍可以写，从未合入的中间状态/被否决的方案一律不提。
 
 ## 安全与配置建议
 不要提交 `config/` 中的敏感信息或个人账号数据。  

@@ -33,6 +33,11 @@ def _json_value(value):
 
 def _field(instance_name, task, group, arg, spec, value):
     widget = spec.get('type', 'input')
+    display = spec.get('display', 'show')
+    if widget == 'lock':
+        # lock 类型值由系统锁定（config_updater 始终用默认值），渲染为禁用的开关
+        widget = 'checkbox'
+        display = 'disabled'
     options = [
         {'value': _json_value(option), 'label': _label(f'{group}.{arg}.{option}', str(option))}
         for option in spec.get('option', [])
@@ -48,7 +53,7 @@ def _field(instance_name, task, group, arg, spec, value):
         # the same group.arg key convention used by the former PyWebIO UI.
         'title': _label(f'{group}.{arg}.name', arg),
         'help': _label(f'{group}.{arg}.help', ''), 'value': _json_value(value),
-        'display': spec.get('display', 'show'), 'readonly': spec.get('display') in ('readonly', 'disabled'),
+        'display': display, 'readonly': display in ('readonly', 'disabled'),
         'options': options, 'validate': spec.get('validate'), 'valuetype': spec.get('valuetype'),
         'unit': spec.get('unit'), 'mode': spec.get('mode'), 'path_picker': spec.get('path_picker'),
         'data_endpoint': data_endpoint.replace('{name}', instance_name) if data_endpoint else None,
@@ -70,7 +75,8 @@ async def schema(request: Request):
         for group, fields in groups.items():
             output_fields = []
             for arg, spec in fields.items():
-                if spec.get('display') == 'hide':
+                # hide_keep: 不在任务页显示，但保留用户已存值（config_update 不重置）
+                if spec.get('display') in ('hide', 'hide_keep'):
                     continue
                 # Storage is a script-managed record dump, not a user setting;
                 # it must not show up as a 任务状态 group on the task page.

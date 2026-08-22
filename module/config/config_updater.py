@@ -146,12 +146,10 @@ class ConfigGenerator:
                 print(f'`{".".join(path)}` is not a existing argument')
                 return False
             # Check type
-            # But allow `Interval` to be different
             old_value = old.get('value', None) if isinstance(old, dict) else old
             value = old.get('value', None) if isinstance(value, dict) else value
             if type(value) != type(old_value) \
-                    and old_value is not None \
-                    and path[2] not in ['SuccessInterval', 'FailureInterval']:
+                    and old_value is not None:
                 print(
                     f'`{value}` ({type(value)}) and `{".".join(path)}` ({type(old_value)}) are in different types')
                 return False
@@ -304,6 +302,9 @@ class ConfigGenerator:
             if value not in ['setting', 'tool']:
                 value = 'setting'
             deep_set(data, keys=[task_group, 'page'], value=value)
+            value = deep_get(self.task, keys=[task_group, 'icon'])
+            if isinstance(value, str) and value:
+                deep_set(data, keys=[task_group, 'icon'], value=value)
             tasks = deep_get(self.task, keys=[task_group, 'tasks'], default={})
             tasks = list(tasks.keys())
             deep_set(data, keys=[task_group, 'tasks'], value=tasks)
