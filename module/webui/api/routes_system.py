@@ -24,6 +24,7 @@ async def status(_: Request):
         'version': _git_version(), 'updater_state': updater.state,
         'theme': State.deploy_config.Theme, 'language': lang.LANG,
         'home_page': State.deploy_config.HomePage,
+        'console_enabled': bool(State.deploy_config.ConsoleEnabled),
     })
 
 
@@ -208,6 +209,28 @@ async def monitors(_: Request):
     return JSONResponse(_build_screen_number_options())
 
 
+async def vdd_status(_: Request):
+    try:
+        from module.device.win.vdd import vdd_status as _status
+        return JSONResponse(await asyncio.to_thread(_status))
+    except Exception as exc:
+        logger.warning(f'VDD status failed: {exc}')
+        return _json_error(str(exc))
+
+
+async def vdd_set(request: Request):
+    action = request.path_params['action']
+    if action not in ('enable', 'disable'):
+        return _json_error(f'Invalid VDD action: {action}')
+    try:
+        from module.device.win import vdd
+        await asyncio.to_thread(vdd._expect_success, action)
+        return JSONResponse({'status': 'success', 'message': f'VDD {action} done.'})
+    except Exception as exc:
+        logger.exception(exc)
+        return _json_error(f'{exc}(请确认 NKAS 以管理员身份运行)')
+
+
 def _dialog_initial_location(default):
     initialdir, initialfile = '', ''
     if default:
@@ -240,7 +263,12 @@ def _show_path_dialog_win32(payload):
         pidl, _, _ = shell.SHBrowseForFolder(foreground_hwnd, None, payload['title'], flags)
         if not pidl:
             return ''
-        return os.path.normpath(shell.SHGetPathFromIDList(pidl))
+        # 部分 pywin32 版本 SHGetPathFromIDList 返回 bytes（ANSI），优先用 W 版
+        get_path = getattr(shell, 'SHGetPathFromIDListW', None) or shell.SHGetPathFromIDList
+        path = get_path(pidl)
+        if isinstance(path, bytes):
+            path = os.fsdecode(path)
+        return os.path.normpath(path)
     filter_parts = []
     for ext in payload['accept']:
         filter_parts += [f'{ext.lstrip(".").upper()} files (*{ext})', f'*{ext}']
@@ -327,6 +355,9 @@ async def pick_path(request: Request):
         }, status_code=503)
     if not path:
         return JSONResponse({'ok': True, 'canceled': True, 'path': '', 'error': ''})
+    # 防御：对话框实现可能返回 bytes（旧版 pywin32 ANSI API），统一转成 str
+    if isinstance(path, bytes):
+        path = os.fsdecode(path)
     return JSONResponse({'ok': True, 'canceled': False, 'path': path, 'error': ''})
 
 

@@ -19,6 +19,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const activeGroup = ref('')
   const importBusy = ref<Record<string, boolean>>({})
   const notifyTestBusy = ref(false)
+  const physicalBusy = ref('')
+  const serialDevices = ref<{ serial: string; status: string }[]>([])
+  const serialDevicesBusy = ref(false)
 
   const selectedName = computed(() => String(router.currentRoute.value.params.name || ''))
   const selectedTask = computed(() => String(router.currentRoute.value.params.task || ''))
@@ -105,13 +108,34 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   function isWideField(field: Field) { return Boolean(field.path_picker) || ['item_table', 'interception_stone_charts', 'interception_stone_import', 'textarea', 'priority'].includes(field.widget) }
 
   async function refreshSpecial(field: Field) { if (field.data_endpoint && field.widget !== 'interception_stone_import') field.special_data = await api.get(field.data_endpoint) }
+  // Screen options always keep the stored value as a fallback entry when its
+  // monitor is absent (e.g. a disabled VDD screen), so the selection never
+  // silently disappears.
+  function applyMonitorOptions(field: Field, monitors: any[]) {
+    const hasValue = field.value !== null && field.value !== undefined && field.value !== ''
+    const missing = hasValue && !monitors.some((option: any) => (option !== null && typeof option === 'object' ? option.value : option) === field.value)
+    field.options = missing ? [...monitors, { value: field.value, label: `${field.value} | ${t('当前配置(未检测到对应显示器)')}` }] : monitors
+  }
+  async function refreshMonitors(field: Field) {
+    const monitors = await api.get('/api/system/monitors').catch(() => null)
+    if (monitors) applyMonitorOptions(field, monitors)
+  }
+  const vddBusy = ref(false)
+  async function vddSet(action: 'enable' | 'disable') {
+    if (vddBusy.value) return
+    vddBusy.value = true
+    try {
+      await api.post(`/api/system/vdd/${action}`)
+      toast.notify(t('操作成功'), 'ok')
+    } catch (exception: any) { toast.error = exception.message } finally { vddBusy.value = false }
+  }
   async function loadWorkspace() {
     if (!selectedName.value) return
     schemaReady.value = false
     try {
       schema.value = await api.get(`/api/${selectedName.value}/schema`)
       const monitors = await api.get('/api/system/monitors').catch(() => [])
-      allFields().forEach(field => { if (field.key.endsWith('.ScreenNumber')) field.options = monitors })
+      allFields().forEach(field => { if (field.key.endsWith('.ScreenNumber')) applyMonitorOptions(field, monitors) })
       collapsed.value = {}
       Object.values(schema.value.tasks).forEach((task: any) => task.groups.forEach((group: any) => { if (group.collapsed) collapsed.value[group.key] = true }))
       // Rail groups start collapsed; in-app navigation keeps them untouched
@@ -273,17 +297,35 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       toast.notify(parts.join('；'), result.ok ? 'ok' : 'error', 4000)
     } catch (exception: any) { toast.error = exception.message } finally { notifyTestBusy.value = false }
   }
+  async function physicalResolution(action: 'set' | 'reset') {
+    if (physicalBusy.value) return
+    physicalBusy.value = action
+    try {
+      const result = await api.post(`/api/${selectedName.value}/physical_device/resolution`, { action })
+      if (!result.ok) throw new Error(result.message || t('操作失败'))
+      toast.notify(result.message || t('已完成'), 'ok', 3000)
+    } catch (exception: any) { toast.error = exception.message } finally { physicalBusy.value = '' }
+  }
+  async function loadSerialDevices() {
+    if (serialDevicesBusy.value) return
+    serialDevicesBusy.value = true
+    try {
+      const result = await api.get('/api/adb/devices')
+      if (result.ok) serialDevices.value = result.devices || []
+      else throw new Error(result.message || t('查询失败'))
+    } catch (exception: any) { toast.error = exception.message } finally { serialDevicesBusy.value = false }
+  }
   async function startTool() {
     try { await api.post(`/api/${selectedName.value}/tool/${selectedTask.value}/start`) } catch (exception: any) { toast.error = exception.message }
   }
 
   return {
-    schema, queue, schemaReady, collapsed, railCollapsed, taskFilter, activeGroup, importBusy, notifyTestBusy,
+    schema, queue, schemaReady, collapsed, railCollapsed, taskFilter, activeGroup, importBusy, notifyTestBusy, physicalBusy, serialDevices, serialDevicesBusy,
     selectedName, selectedTask, taskSchema, workspaceName, socketsName,
     logs, logTick, autoScroll, logLevel, pushLogs, visibleLogs, visibleMenus,
-    taskEnabled, allFields, isWideField, refreshSpecial, loadWorkspace,
+    taskEnabled, allFields, isWideField, refreshSpecial, refreshMonitors, vddBusy, vddSet, loadWorkspace,
     startStateSocket, startSockets, closeSockets, openQueueItem,
     saveValue, save, datetimeValue, cancelDatetimeSave, scheduleDatetimeSave, flushDatetimeSave, clearField, clearDatetimeSaveTimers,
-    normalizePath, autofillGamePathFromLauncher, pickedPath, importInterception, testNotify, startTool,
+    normalizePath, autofillGamePathFromLauncher, pickedPath, importInterception, testNotify, startTool, physicalResolution, loadSerialDevices,
   }
 })

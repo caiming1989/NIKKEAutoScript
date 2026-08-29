@@ -11,7 +11,7 @@ import { useSystemStore } from '../stores/system'
 import { useUiStore } from '../stores/ui'
 
 const router = useRouter()
-const { isDashboard, isManage, isSettings, isDeploy, isLogs, isLinks, isAbout, selectedName } = useRouteInfo()
+const { isDashboard, isManage, isSettings, isDeploy, isLogs, isTools, isLinks, isAbout, selectedName } = useRouteInfo()
 const instancesStore = useInstancesStore()
 const { instances } = storeToRefs(instancesStore)
 const { displayStatus, displayStatusClass, initials } = instancesStore
@@ -52,6 +52,7 @@ function onBrandMouseDown(event: MouseEvent) { onWindowDragAreaMouseDown(event, 
     </div>
     <div class="side-section">
       <div class="side-label">{{ t('其他') }}</div>
+      <button class="side-item" :class="{ active: isTools }" @click="router.push('/tools')"><span class="sicon">🧰</span><span class="side-text">{{ t('常用工具') }}</span></button>
       <button class="side-item" :class="{ active: isLinks }" @click="router.push('/links')"><span class="sicon">🌐</span><span class="side-text">{{ t('常用链接') }}</span></button>
     </div>
     <div class="side-spacer"></div>

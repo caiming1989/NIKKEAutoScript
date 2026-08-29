@@ -22,6 +22,7 @@ import OverviewView from './views/OverviewView.vue'
 import ScheduleView from './views/ScheduleView.vue'
 import SettingsView from './views/SettingsView.vue'
 import TaskView from './views/TaskView.vue'
+import ToolsView from './views/ToolsView.vue'
 import { useDeployStore } from './stores/deploy'
 import { useInstancesStore } from './stores/instances'
 import { useLinksStore } from './stores/links'
@@ -34,7 +35,7 @@ import { useWorkspaceStore } from './stores/workspace'
 
 const route = useRoute()
 const router = useRouter()
-const { selectedName, selectedPage, isDashboard, isManage, isSettings, isDeploy, isLogs, isLinks, isWorkspace } = useRouteInfo()
+const { selectedName, selectedPage, isDashboard, isManage, isSettings, isDeploy, isLogs, isTools, isLinks, isWorkspace } = useRouteInfo()
 
 const toast = useToastStore()
 const { toasts } = storeToRefs(toast)
@@ -138,6 +139,7 @@ onBeforeUnmount(() => {
       <DeployView v-else-if="isDeploy" />
       <LogsView v-else-if="isLogs" />
       <LinksView v-else-if="isLinks" />
+      <ToolsView v-else-if="isTools" />
       <AboutView v-else />
     </main>
     </div>

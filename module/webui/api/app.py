@@ -7,9 +7,9 @@ from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
 from module.logger import logger
-from . import (routes_bla, routes_calendar, routes_config, routes_deploy, routes_instances, routes_logs, routes_maintenance,
-               routes_notify, routes_preview, routes_proxy, routes_schedule, routes_serial, routes_stats, routes_system,
-               routes_tasks, ws)
+from . import (routes_bla, routes_calendar, routes_config, routes_console, routes_deploy, routes_device,
+               routes_instances, routes_logs, routes_maintenance, routes_notify, routes_preview, routes_proxy,
+               routes_schedule, routes_serial, routes_stats, routes_system, routes_tasks, routes_tools, ws)
 
 
 def create_spa_mount():
@@ -42,6 +42,8 @@ def mount_api(app):
         Route('/api/system/notices/read', routes_system.read_announcements, methods=['POST']),
         Route('/api/system/notices/{key:str}/dismiss', routes_system.dismiss_notice, methods=['POST']),
         Route('/api/system/monitors', routes_system.monitors, methods=['GET']),
+        Route('/api/system/vdd/status', routes_system.vdd_status, methods=['GET']),
+        Route('/api/system/vdd/{action:str}', routes_system.vdd_set, methods=['POST']),
         Route('/api/system/pick-path', routes_system.pick_path, methods=['POST']),
         Route('/api/system/language', routes_system.set_language, methods=['POST']),
         Route('/api/system/theme', routes_system.set_theme, methods=['POST']),
@@ -50,11 +52,16 @@ def mount_api(app):
         Route('/api/system/deploy/reset', routes_deploy.deploy_reset, methods=['POST']),
         Route('/api/serial/state', routes_serial.state, methods=['GET']),
         Route('/api/serial/reset', routes_serial.reset, methods=['POST']),
+        Route('/api/adb/devices', routes_device.devices, methods=['GET']),
         Route('/api/system/logs/files', routes_logs.log_files, methods=['GET']),
         Route('/api/system/logs/download', routes_logs.log_download, methods=['GET']),
         Route('/api/system/logs', routes_logs.log_query, methods=['GET']),
         Route('/api/proxy/links', routes_proxy.proxy_links, methods=['GET']),
         Route('/api/proxy', routes_proxy.proxy, methods=['GET']),
+        Route('/api/tools/hosts', routes_tools.hosts_state, methods=['GET']),
+        Route('/api/tools/hosts', routes_tools.hosts_update, methods=['POST']),
+        Route('/api/tools/game_clone', routes_tools.game_clone_info, methods=['GET']),
+        Route('/api/tools/game_clone', routes_tools.game_clone_start, methods=['POST']),
         Route('/api/{name:str}/start', routes_instances.start, methods=['POST']),
         Route('/api/{name:str}/stop', routes_instances.stop, methods=['POST']),
         Route('/api/{name:str}/remark', routes_instances.remark, methods=['POST']),
@@ -70,6 +77,7 @@ def mount_api(app):
         Route('/api/{name:str}/interception/stats', routes_stats.interception_stats, methods=['GET']),
         Route('/api/{name:str}/interception/import', routes_stats.import_interception, methods=['POST']),
         Route('/api/{name:str}/notify/test', routes_notify.test_notify, methods=['POST']),
+        Route('/api/{name:str}/physical_device/resolution', routes_device.resolution, methods=['POST']),
         Route('/api/{name:str}/bla/login', routes_bla.login_start, methods=['POST']),
         Route('/api/{name:str}/bla/login/status', routes_bla.login_status, methods=['GET']),
         Route('/api/{name:str}/bla/login/shot', routes_bla.login_shot, methods=['GET']),
@@ -82,6 +90,7 @@ def mount_api(app):
         Route('/api/{name:str}/task/{task:str}/run', routes_tasks.run_task, methods=['POST']),
         Route('/api/{name:str}/tool/{task:str}/start', routes_tasks.start_tool, methods=['POST']),
         Route('/api/{name:str}', routes_instances.delete, methods=['DELETE']),
+        WebSocketRoute('/ws/console', routes_console.console_socket),
         WebSocketRoute('/ws/state', ws.state_socket),
         WebSocketRoute('/ws/{name:str}/log', ws.log_socket),
         WebSocketRoute('/ws/{name:str}/queue', ws.queue_socket),

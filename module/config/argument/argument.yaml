@@ -48,12 +48,25 @@ Emulator:
     option: [ com.proximabeta.nikke, com.gamamobi.nikke, ]
   ScreenshotMethod:
     value: DroidCast
-    option: [ DroidCast, ]
+    option: [ DroidCast, ADB ]
   ControlMethod:
     value: minitouch
-    option: [ minitouch, ]
+    option: [ minitouch, uiautomator2, ADB, MaaTouch ]
   AdbRestart: false
   ScreenshotInterval: 0.5
+PhysicalDevice:
+  Enable:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  AutoRestoreResolution:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  VirtualDisplay:
+    type: checkbox
+    value: false
+    option: [ true, false ]
 Scrcpy:
   WebUrl: ''
   Bitrate: 16000000
@@ -90,6 +103,8 @@ PCClient:
   ScreenNumber:
     value: 0
     option: [ 0, 1, 2, 3, 4, 5 ]
+  VddScreen: false
+  VddAutoManage: false
   GameWindowPosition:
     value: center
     option: [ center, left, right, topleft, topright, bottomleft, bottomright ]
@@ -150,8 +165,10 @@ Optimization:
       mode: file
       accept: [ .bat, .ps1, .exe, .sh ]
 Log:
+  # 已迁移到部署页（deploy.yaml LogRetentionDays），此处保留定义以兼容旧实例配置的回退读取
   RetentionDays:
     value: 30
+    display: hide_keep
 Reward:
   CollectSocialPoint: true
   CollectSpecialArenaPoint: false

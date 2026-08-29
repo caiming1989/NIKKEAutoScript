@@ -27,10 +27,15 @@ class GeneratedConfig:
     # Group `Emulator`
     Emulator_Serial = 'auto'
     Emulator_PackageName = 'com.proximabeta.nikke'  # com.proximabeta.nikke, com.gamamobi.nikke, com.proximabeta.nikke, com.gamamobi.nikke
-    Emulator_ScreenshotMethod = 'DroidCast'  # DroidCast
-    Emulator_ControlMethod = 'minitouch'  # minitouch
+    Emulator_ScreenshotMethod = 'DroidCast'  # DroidCast, ADB
+    Emulator_ControlMethod = 'minitouch'  # minitouch, uiautomator2, ADB, MaaTouch
     Emulator_AdbRestart = False
     Emulator_ScreenshotInterval = 0.5
+
+    # Group `PhysicalDevice`
+    PhysicalDevice_Enable = False  # True, False
+    PhysicalDevice_AutoRestoreResolution = True  # True, False
+    PhysicalDevice_VirtualDisplay = False  # True, False
 
     # Group `Scrcpy`
     Scrcpy_WebUrl = None
@@ -45,6 +50,8 @@ class GeneratedConfig:
     # Group `PCClient`
     PCClient_Screens = False
     PCClient_ScreenNumber = 0  # 0, 1, 2, 3, 4, 5
+    PCClient_VddScreen = False
+    PCClient_VddAutoManage = False
     PCClient_GameWindowPosition = 'center'  # center, left, right, topleft, topright, bottomleft, bottomright
     PCClient_GameResolutionCompat = True
     PCClient_ScreenRotate = False
