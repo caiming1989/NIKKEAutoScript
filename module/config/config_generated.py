@@ -69,6 +69,7 @@ class GeneratedConfig:
     PCClientInfo_GameProcessName = None
     PCClientInfo_ScreenshotMethod = 'pyautogui'  # pyautogui, mss, PrintWindow
     PCClientInfo_ScreenshotInterval = 0.3
+    PCClientInfo_ControlScheme = 'pyautogui'  # pyautogui, postmessage
 
     # Group `Optimization`
     Optimization_AutoRedCircle = False
@@ -189,7 +190,6 @@ class GeneratedConfig:
     # Group `Event`
     Event_LoginStamp = True
     Event_Challenge = True
-    Event_Coop = False
     Event_Shop = False
     Event_ShopDelayList = 'TITLE'
     Event_Game = False
