@@ -7,6 +7,7 @@ from module.device.win.automation import Automation
 from module.device.win.input import Input
 from module.device.win.ok_interaction.hwnd_window import HwndWindowAdapter
 from module.device.win.ok_interaction.input import PostMessageInput
+from module.device.win.ok_interaction.post_message import PostMessageInteraction
 
 
 def _client(window_name):
@@ -24,15 +25,19 @@ def _input(window_name='Game'):
 
 
 class BackgroundControlTests(unittest.TestCase):
-    def test_automation_scroll_uses_swipe_coordinates(self):
+    def test_automation_background_scroll_uses_inertia_free_scroll(self):
         automation = Automation.__new__(Automation)
         automation.config = SimpleNamespace(PCClientInfo_ControlScheme='postmessage')
         automation.current_window = SimpleNamespace(offset=(100, 200))
         automation.mouse_swipe = Mock()
+        automation.mouse_move = Mock()
+        automation.mouse_scroll = Mock()
 
         automation.swipe((10, 20), (10, 320), speed=7, method='scroll')
 
-        automation.mouse_swipe.assert_called_once_with((110, 220), (110, 520), speed=7)
+        automation.mouse_swipe.assert_not_called()
+        automation.mouse_move.assert_called_once_with(110, 370)
+        automation.mouse_scroll.assert_called_once_with(4, direction=1)
 
     def test_automation_foreground_scroll_uses_wheel(self):
         automation = Automation.__new__(Automation)
@@ -47,6 +52,33 @@ class BackgroundControlTests(unittest.TestCase):
         automation.mouse_swipe.assert_not_called()
         automation.mouse_move.assert_called_once_with((110 + 110) // 2, (220 + 520) // 2)
         automation.mouse_scroll.assert_called_once_with(4, direction=1)
+
+    def test_automation_short_scroll_still_scrolls_once(self):
+        for scheme in ('postmessage', 'pyautogui'):
+            with self.subTest(scheme=scheme):
+                automation = Automation.__new__(Automation)
+                automation.config = SimpleNamespace(PCClientInfo_ControlScheme=scheme)
+                automation.current_window = SimpleNamespace(offset=(100, 200))
+                automation.mouse_move = Mock()
+                automation.mouse_scroll = Mock()
+
+                # 60px 短距离：round(60/65)-1 = 0，必须兜底为至少一次滚动
+                automation.swipe((10, 20), (10, 80), speed=7, method='scroll')
+
+                automation.mouse_scroll.assert_called_once_with(1, direction=1)
+
+    def test_automation_zero_distance_scroll_does_nothing(self):
+        for scheme in ('postmessage', 'pyautogui'):
+            with self.subTest(scheme=scheme):
+                automation = Automation.__new__(Automation)
+                automation.config = SimpleNamespace(PCClientInfo_ControlScheme=scheme)
+                automation.current_window = SimpleNamespace(offset=(100, 200))
+                automation.mouse_move = Mock()
+                automation.mouse_scroll = Mock()
+
+                automation.swipe((10, 20), (10, 20), speed=7, method='scroll')
+
+                automation.mouse_scroll.assert_called_once_with(0, direction=1)
 
     def test_child_window_geometry_matches_interaction_layout(self):
         def enum_children(_hwnd, callback, context):
@@ -146,8 +178,8 @@ class BackgroundControlTests(unittest.TestCase):
         self.assertEqual(
             handler._postmessage_swipe.call_args_list,
             [
-                call((100, 200), (100, 135), 0.2),
-                call((100, 200), (100, 135), 0.2),
+                call((100, 200), (100, 135), 0.2, release_delay=0.12),
+                call((100, 200), (100, 135), 0.2, release_delay=0.12),
             ],
         )
         sleep.assert_any_call(0.1)
@@ -171,6 +203,26 @@ class BackgroundControlTests(unittest.TestCase):
         handler._block_input.assert_called_once_with()
         handler._unblock_input.assert_called_once_with()
         self.assertEqual(set_cursor.call_args_list[-1].args, ((300, 400),))
+
+    def test_inertia_free_scroll_waits_at_endpoint_before_release(self):
+        handler = _input()
+        handler._ensure_window = Mock(return_value=True)
+        handler.interaction = Mock()
+        handler.interaction.hwnd = 42
+        handler._to_client = Mock(return_value=(10, 20))
+        handler.interaction.update_mouse_pos.side_effect = [1001, 1002, 1003, 1004, 1005, 1006, 1007]
+        events = Mock()
+        events.attach_mock(handler.interaction.post, 'post')
+
+        with (
+            patch('module.device.win.ok_interaction.input.win32api.SetCursorPos'),
+            patch('module.device.win.ok_interaction.input.time.sleep') as sleep,
+        ):
+            events.attach_mock(sleep, 'sleep')
+            handler._postmessage_swipe((10, 20), (30, 40), 0.15, release_delay=0.12)
+
+        self.assertEqual(events.mock_calls[-2], call.sleep(0.12))
+        self.assertEqual(events.mock_calls[-1], call.post(0x0202, 0, 1007, hwnd=42))
 
     def test_swipe_does_not_change_foreground_window(self):
         handler = _input()
@@ -218,3 +270,70 @@ class BackgroundControlTests(unittest.TestCase):
         handler._block_input.assert_called_once_with()
         handler._unblock_input.assert_called_once_with()
         self.assertEqual(set_cursor.call_args_list[-1].args, ((300, 400),))
+
+    def test_background_keyboard_posts_key_messages_to_current_top_window(self):
+        handler = _input()
+        handler._ensure_window = Mock(return_value=True)
+        handler.hwnd_window.top_hwnd = 42
+        handler._foreground_send_key = Mock(return_value=True)
+
+        handler.press_key('a', wait_time=0.1)
+
+        handler._foreground_send_key.assert_called_once_with(42, 'a', 0.1)
+
+    def test_background_keyboard_reports_undelivered_key(self):
+        handler = _input()
+        handler._ensure_window = Mock(return_value=True)
+        handler.hwnd_window.top_hwnd = 42
+        handler._foreground_send_key = Mock(return_value=False)
+
+        with patch('module.device.win.ok_interaction.input.logger.warning') as warning:
+            handler.press_key('a', wait_time=0.1)
+
+        warning.assert_called_once_with('Foreground key press a was not delivered')
+
+    def test_background_keyboard_returns_false_when_window_is_missing(self):
+        handler = _input()
+        handler._ensure_window = Mock(return_value=False)
+
+        self.assertFalse(handler.press_key('a', wait_time=0.1))
+
+    def test_background_keyboard_returns_false_on_send_exception(self):
+        handler = _input()
+        handler._ensure_window = Mock(return_value=True)
+        handler.hwnd_window.top_hwnd = 42
+        handler._foreground_send_key = Mock(side_effect=RuntimeError('send failed'))
+
+        with patch('module.device.win.ok_interaction.input.logger.error'):
+            self.assertFalse(handler.secretly_press_key('a', wait_time=0.1))
+
+    def test_foreground_keyboard_restores_previous_window(self):
+        handler = _input()
+        handler.foreground_switcher = Mock()
+
+        with (
+            patch('module.device.win.ok_interaction.input.win32gui.GetForegroundWindow', side_effect=[100, 42]),
+            patch('module.device.win.ok_interaction.input.win32gui.IsWindow', return_value=True),
+            patch('module.device.win.ok_interaction.input.win32gui.SetForegroundWindow') as set_foreground,
+            patch.object(Input, 'secretly_press_key') as send_input,
+        ):
+            self.assertTrue(handler._foreground_send_key(42, 'a', 0.1))
+
+        handler.foreground_switcher.assert_called_once_with(42)
+        send_input.assert_called_once_with(handler, 'a', wait_time=0.1)
+        set_foreground.assert_called_once_with(100)
+
+    def test_background_keyboard_holds_shift_for_shifted_character(self):
+        handler = _input()
+        handler._ensure_window = Mock(return_value=True)
+        handler.hwnd_window.top_hwnd = 42
+        handler._foreground_send_key = Mock(return_value=True)
+
+        handler.secretly_press_key('!', wait_time=0.1)
+
+        handler._foreground_send_key.assert_called_once_with(42, '!', 0.1)
+
+    def test_key_lparam_contains_scan_code_and_key_up_bits(self):
+        with patch('module.device.win.ok_interaction.post_message.win32api.MapVirtualKey', return_value=0x4D):
+            self.assertEqual(PostMessageInteraction.make_key_lparam(0x4D), 0x4D0001)
+            self.assertEqual(PostMessageInteraction.make_key_lparam(0x4D, key_up=True), 0xC04D0001)

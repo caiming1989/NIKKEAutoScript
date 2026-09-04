@@ -106,7 +106,11 @@ class Automation:
         if str(self.config.PCClientInfo_ControlScheme) == 'postmessage':
             from module.device.win.ok_interaction.input import PostMessageInput
 
-            self.input_handler = PostMessageInput(lambda: self.current_window, hwnd_resolver=self.get_current_window_hwnd)
+            self.input_handler = PostMessageInput(
+                lambda: self.current_window,
+                hwnd_resolver=self.get_current_window_hwnd,
+                foreground_switcher=self.set_foreground_window_with_retry,
+            )
             logger.info('Control scheme: postmessage')
         else:
             self.input_handler = Input()
@@ -261,24 +265,20 @@ class Automation:
         p1 = p1[0] + self.current_window.offset[0], p1[1] + self.current_window.offset[1]
         if method == 'scroll':
             p2 = p2[0] + self.current_window.offset[0], p2[1] + self.current_window.offset[1]
-            if str(self.config.PCClientInfo_ControlScheme) == 'postmessage':
-                # NIKKE 不消费后台 WM_MOUSEWHEEL，后台滚动转换为拖拽消息。
-                self.mouse_swipe(p1, p2, speed=speed)
+            start_x, start_y = p1
+            end_x, end_y = p2
+            horizontal = abs(end_x - start_x) > abs(end_y - start_y)
+            pixel_distance = end_x - start_x if horizontal else end_y - start_y
+            if not pixel_distance:
+                pixel_distance = end_x - start_x
+            # 非零距离至少滚动一次，避免短距离被 round 和 -1 抹成空操作
+            scroll_count = max(1, round(abs(pixel_distance) / 65) - 1) if pixel_distance else 0
+            if horizontal:
+                direction = 1 if pixel_distance < 0 else -1
             else:
-                # 前台模式保留真实滚轮语义。
-                start_x, start_y = p1
-                end_x, end_y = p2
-                horizontal = abs(end_x - start_x) > abs(end_y - start_y)
-                pixel_distance = end_x - start_x if horizontal else end_y - start_y
-                if not pixel_distance:
-                    pixel_distance = end_x - start_x
-                scroll_count = round(abs(pixel_distance) / 65) - 1
-                if horizontal:
-                    direction = 1 if pixel_distance < 0 else -1
-                else:
-                    direction = -1 if pixel_distance < 0 else 1
-                self.mouse_move((start_x + end_x) // 2, (start_y + end_y) // 2)
-                self.mouse_scroll(scroll_count, direction=direction)
+                direction = -1 if pixel_distance < 0 else 1
+            self.mouse_move((start_x + end_x) // 2, (start_y + end_y) // 2)
+            self.mouse_scroll(scroll_count, direction=direction)
         elif method == 'swipe':
             # 使用鼠标滑动
             # 原始目标点

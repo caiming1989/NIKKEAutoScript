@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+import inflection
+
 
 class ManualConfig:
     SCHEDULER_PRIORITY = """
@@ -127,6 +129,17 @@ class ManualConfig:
             #     "vertical_direction": "bottom_to_top",
             #     "horizontal_direction": "right_to_left",
             # },
+        },
+        {
+            "event_id": "event_20260903",
+            "event_name": "GREAT VILLAIN UNION",
+            # 小型活动
+            "event_type": 2,
+            "mini_game": False,
+            "mini_game_play": True,
+            "extend": False,
+            "story_part": "Story_1",  # Story_1, Story_2
+            "story_difficulty": "Normal"  # Normal, Hard
         },
         {
             "event_id": "event_20260723",
@@ -409,6 +422,7 @@ class ManualConfig:
 
     DEVICE_OVER_HTTP = False
 
-    # 独立任务，不依赖游戏运行
-    INDEPENDENT_TASKS = ["BlaDaily", "BlaCDK", "BlaExchange", "ScreenRotate", "UpdateHosts"]
-    INDEPENDENT_TASKS_UNDER = ["bla_daily", "bla_cdk", "bla_exchange", "screen_rotate", "update_hosts"]
+    # 独立任务，不依赖游戏运行（无需初始化 device、不拉起游戏）
+    INDEPENDENT_TASKS = ["BlaDaily", "BlaCDK", "BlaExchange", "ScreenRotate", "UpdateHosts", "Notify"]
+    # 下划线形式供 run() 比对任务名，由上者派生，避免两份名单手工同步
+    INDEPENDENT_TASKS_UNDER = [inflection.underscore(task) for task in INDEPENDENT_TASKS]
