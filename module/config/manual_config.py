@@ -114,32 +114,11 @@ class ManualConfig:
             "event_name": "COINRUSH SHOWDOWN",
             # 大型活动
             "event_type": 1,
-            "mini_game": False,
+            "mini_game": True,
             "mini_game_play": True,
             "extend": False,
             "story_part": "Story_1",  # Story_1, Story_2
             "story_difficulty": "Normal",  # Normal, Hard
-            "pending_click_offset": (0, 0),
-            # Story_1
-            # "pending_finder": {
-            #     "mode": "grid",
-            #     "area": (25, 350, 325, 1175),
-            #     "rows": 10,
-            #     "columns": 1,
-            #     "vertical_direction": "bottom_to_top",
-            #     "horizontal_direction": "right_to_left",
-            # },
-        },
-        {
-            "event_id": "event_20260813",
-            "event_name": "PERSONA ON FRONTLINE",
-            # 大型活动
-            "event_type": 1,
-            "mini_game": True,
-            "mini_game_play": True,
-            "extend": False,
-            "story_part": "Story_2",  # Story_1, Story_2
-            "story_difficulty": "Hard",  # Normal, Hard
             "pending_click_offset": (0, 0),
             # Story_1
             # "pending_finder": {
@@ -161,6 +140,27 @@ class ManualConfig:
             "extend": False,
             "story_part": "Story_1",  # Story_1, Story_2
             "story_difficulty": "Hard"  # Normal, Hard
+        },
+        {
+            "event_id": "event_20260813",
+            "event_name": "PERSONA ON FRONTLINE",
+            # 大型活动
+            "event_type": 1,
+            "mini_game": True,
+            "mini_game_play": True,
+            "extend": False,
+            "story_part": "Story_2",  # Story_1, Story_2
+            "story_difficulty": "Hard",  # Normal, Hard
+            "pending_click_offset": (0, 0),
+            # Story_1
+            # "pending_finder": {
+            #     "mode": "grid",
+            #     "area": (25, 350, 325, 1175),
+            #     "rows": 10,
+            #     "columns": 1,
+            #     "vertical_direction": "bottom_to_top",
+            #     "horizontal_direction": "right_to_left",
+            # },
         },
         {
             "event_id": "event_20260723",

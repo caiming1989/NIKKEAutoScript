@@ -211,6 +211,32 @@ async def game_clone_start(request: Request):
     return JSONResponse({'status': 'success', 'job': clone_status()})
 
 
+async def virtual_mouse_driver_state(_: Request):
+    from module.tools.virtual_mouse_driver import driver_status
+    return JSONResponse(driver_status())
+
+
+async def virtual_mouse_driver_update(request: Request):
+    from module.tools.virtual_mouse_driver import (driver_status, install_driver,
+                                                   uninstall_driver, VirtualMouseDriverError)
+    try:
+        data = await request.json()
+    except ValueError:
+        data = {}
+    action = data.get('action', 'install')
+    if action not in ('install', 'uninstall'):
+        return JSONResponse({'status': 'error', 'message': 'Expected action: install/uninstall.'}, status_code=400)
+    try:
+        result = await asyncio.to_thread(install_driver if action == 'install' else uninstall_driver)
+    except VirtualMouseDriverError as exc:
+        return JSONResponse({'status': 'error', 'message': str(exc)}, status_code=400)
+    payload = {'status': 'success', 'action': action, **driver_status()}
+    # 安装成功但驱动切换被推迟到重启时，把 reboot_required/提示透传给前端
+    if isinstance(result, dict):
+        payload.update(result)
+    return JSONResponse(payload)
+
+
 async def hosts_update(request: Request):
     try:
         data = await request.json()
